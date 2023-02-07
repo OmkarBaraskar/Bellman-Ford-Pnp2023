@@ -12,6 +12,9 @@ lean_lib «BellmanFord» {
 require mathlib from git
   "https://github.com/leanprover-community/mathlib4.git"@"master"
 
+require Graph from git
+  "https://github.com/OmkarBaraskar/graph-library-for-lean4.git"
+
 @[default_target]
 lean_exe «bellman-Ford» {
   root := `Main
