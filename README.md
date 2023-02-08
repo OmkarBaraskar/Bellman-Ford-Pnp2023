@@ -8,7 +8,8 @@ The goal for this project is to implement the Bellman-Ford algorithm. Adding imp
 
 ## Approach
 
-We look through the Graph library (link in References below) to understand how graphs have been defined there. Then, we use the definitions and functions to implement a function which takes a weighted directed graph with vertices labelled [1, 2, 3...., n] and a root vertex as input, and outputs two lists of length n; the Distance list, whose ith entry is the length of the shortest path between the root vertex and vertex i, and the Predecessor list, whose ith entry is the vertex preceding the ith vertex along the shortest path between the root vertex and vertex i. 
+We look through the Graph library (link in References below) to understand how graphs have been defined there. Then, we use the definitions and functions to implement a function which takes a weighted directed graph with vertices labelled [1, 2, 3...., n] and a root vertex as input, and outputs two lists of length n; the Distance list, whose ith entry is the length of the shortest path between the root vertex and vertex i, and the Predecessor list, whose ith entry is the vertex preceding the ith vertex along the shortest path between the root vertex and vertex i.
+
 Thus, by observing these two lists, one can determine the shortest distance and the shortest path between the root vertex and any other vertex on the given weighted directed graph.
 
 ## References
