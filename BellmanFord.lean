@@ -140,3 +140,114 @@ private def BFAuxBase (g : Graph α Int) (source : Nat) : Array (BFVertex) :=
 
 def BellmanFord (g : Graph α Int) (source : Nat) : BFShortestPathTree := ⟨ (BFAuxBase g source) ⟩ 
 -------------End of BFAlgo---------------
+-- def BellmanFord (g : Graph α Int) (source : Nat) : ShortestPathTree := (BFAuxBase g source none)
+-------------End of BFAlgo---------------
+
+def Initialise_graph (g : Graph α Int) (source : Nat): Array (BFVertex) := 
+    let ver : BFVertex :=   {predecessor:= 0, distance := some 0}  
+    Array.setD (mkArray g.vertexCount default) source ver
+
+def relax (edge : Edge Int) (w: Array (BFVertex)) (i : Nat) : Array (BFVertex) :=
+    match w[i]!.distance with
+    | none => w
+    | some u => 
+        match w[edge.target]!.distance with
+        | none =>  Array.setD w edge.target {predecessor := i,  distance := u + edge.weight}
+        | some v => 
+            if v  > u + edge.weight  then 
+              Array.setD w edge.target {predecessor := i, distance := u + edge.weight}
+            else
+              w
+
+
+def relax_all_edges (g : Graph α Int) (w : Array BFVertex) : Nat → Array (BFVertex)
+    | 0 => w
+    | n + 1 => Id.run do
+        let mut ret : Array BFVertex := w
+        for edge in g.vertices[n]!.adjacencyList do
+            ret := relax edge ret n
+        relax_all_edges g ret n
+
+def Bellman_Ford_Aux (g : Graph α Int) (source : Nat) (w : Array BFVertex) : Nat → Array (BFVertex) 
+    | 0 => Initialise_graph g source
+    | n + 1 => relax_all_edges g (Bellman_Ford_Aux g source w n) g.vertexCount  
+
+
+def negative_cycle_detection_edge (i : Nat) (edge : Edge Int) (w : Array BFVertex) : Bool :=
+    match w[i]!.distance with
+    | none => true
+    | some u => 
+        match w[edge.target]!.distance with
+        | none =>  true
+        | some v => 
+            if v  > u + edge.weight  then 
+              false
+            else
+              true
+
+def negative_cycle_detection (g : Graph α Int) (w : Array BFVertex) (nncycle : Bool) : Nat → Bool 
+    | 0 => nncycle
+    | n + 1 => Id.run do
+        let mut no_neg_cycle : Bool := true
+        for edge in g.vertices[n]!.adjacencyList do
+            no_neg_cycle :=
+              match (negative_cycle_detection_edge (n) edge w) with
+              | true => no_neg_cycle
+              | false => false
+        negative_cycle_detection g w (nncycle ∧ no_neg_cycle) n
+
+def BellmanFord! (g : Graph α Int) (source : Nat) : Array BFVertex :=
+    let BFGraph : Array BFVertex := Bellman_Ford_Aux g source (mkArray g.vertexCount default) g.vertexCount
+    match (negative_cycle_detection g BFGraph true g.vertexCount) with
+    | true => BFGraph
+    | false => panic! "The Graph has negative cycle"      
+                
+
+def g_array : Array Nat := #[1,2,3,4,5]
+
+def g : Graph Nat Int := makeGraphFromArray g_array
+
+def adding_edges_by_arrays (g : Graph Nat Int) (as : Array (Array Nat × Int)) : Graph Nat Int := Id.run do
+    let mut ret : Graph Nat Int := g
+    for i in as do
+        ret := addEdgeByID ret (i.fst[0]!-1) (i.fst[1]!-1) i.snd 
+    ret
+def g_final := adding_edges_by_arrays g (#[(#[1,2],5),(#[2,1],-2),(#[3,2],7),(#[4,3],9),(#[1,4],8),(#[1,3],-4),(#[5,1],6),(#[5,4],7),(#[3,5],2),(#[4,2],-3)])
+
+#eval g_final 
+
+#eval g_final.edgeCount
+
+#eval Bellman_Ford_Aux g_final 4 (mkArray g.vertexCount default) 4
+
+def w1 := BellmanFord! g_final 4
+
+def dynamic_edge_addition (g : Graph Nat Int) (w: Array BFVertex) (source : Nat) (edge : Nat × Nat × Int) : Graph Nat Int × Array BFVertex :=
+    let g_updated := addEdgeByID g edge.1 edge.2.1 edge.2.2
+    ⟨ g_updated, (Bellman_Ford_Aux g_updated source w) 1⟩ 
+
+def g_final_1 := adding_edges_by_arrays g (#[(#[1,2],5),(#[2,1],-2),(#[3,2],7),(#[4,3],9),(#[1,4],8),(#[1,3],-4),(#[5,1],6),(#[5,4],7),(#[3,5],2)])
+
+def w2 :=  dynamic_edge_addition g_final_1 w1 4 (4,2,-3)
+
+#eval w2
+
+def dynamic_vertex_addition (g : Graph Nat Int) (w: Array BFVertex) (source : Nat) (vertex : Vertex Nat Nat) : Graph Nat Int × Array BFVertex := 
+    let g_updated := (addVertex g vertex.payload).fst  
+    ⟨ g_updated, (Bellman_Ford_Aux g_updated source w) 1⟩
+             
+
+
+     
+
+    
+    
+
+
+
+
+
+
+
+
+
