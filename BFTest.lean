@@ -21,15 +21,9 @@ def g_final := adding_edges_by_arrays g (#[(#[1,2],5),(#[2,1],-2),(#[3,2],7),(#[
 
 #eval g_final ---For better visualisaton of the graph refer to Fig 24.4 of Introduction to Algorithms (CLRS)
 
-
-<<<<<<< HEAD
 ----------End of Construction of Graph----------
 
 ----------Testing----------
-=======
-def w1 := BellmanFord g_final 4
->>>>>>> b6002c20edee006ebefd83467e6c77fa4ff83897
-
 
 def BF_weight_array := BellmanFord g_final 4
 
