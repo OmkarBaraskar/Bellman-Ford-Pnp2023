@@ -127,14 +127,38 @@ private def BFAux (g : Graph α Int) (BFVerticesTemp : Array BFVertex) : Nat -> 
     for vertex in g.getAllVertexIDs do -- for each vertex in g, we update distances and predecessors for each edge in g.vertices[vertex].adjacencyList.
       BFVertices := BFAux2 g vertex BFVertices
     BFAux g BFVertices n --for recursion.
+  
+private def negative_cycle_detection_edge (i : Nat) (edge : Edge Int) (w : Array BFVertex) : Bool :=
+    match w[i]!.distance with
+    | none => true
+    | some u => 
+        match w[edge.target]!.distance with
+        | none =>  true
+        | some v => 
+            if v  > u + edge.weight  then 
+              false
+            else
+              true
+
+private def negative_cycle_detection (g : Graph α Int) (w : Array BFVertex) (nncycle : Bool) : Nat → Bool 
+    | 0 => nncycle
+    | n + 1 => Id.run do
+        let mut no_neg_cycle : Bool := true
+        for edge in g.vertices[n]!.adjacencyList do
+            no_neg_cycle :=
+              match (negative_cycle_detection_edge (n) edge w) with
+              | true => no_neg_cycle
+              | false => false
+        negative_cycle_detection g w (nncycle ∧ no_neg_cycle) n
 
 private def BFAuxBase (g : Graph α Int) (source : Nat) : Array (BFVertex) :=
   let BFVerticesInitial : Array (BFVertex) := mkArray g.vertexCount {predecessor := source} -- predecessor is only a placeholder here, it has no significance and will be replaced or not used
   if h : source < BFVerticesInitial.size then
     let BFVertices := BFVerticesInitial.set ⟨source, h⟩ {predecessor := source, distance := some 0}
-    let BFVerticesPreNegCycleCheck : Array (BFVertex) := BFAux g BFVertices (g.vertexCount - 1)
-    BFVerticesPreNegCycleCheck
-    /- Now, we need to add code for catching negative edges and detecting a negative cycle-/
+    let BFVerticesUpdated : Array (BFVertex) := BFAux g BFVertices (g.vertexCount - 1)
+    match (negative_cycle_detection g BFVerticesUpdated true g.vertexCount) with
+    | true => BFVerticesUpdated
+    | false => panic! "The Graph has negative cycle"
   else
       panic! "source out of bounds"
 
@@ -172,29 +196,6 @@ def Bellman_Ford_Aux (g : Graph α Int) (source : Nat) (w : Array BFVertex) : Na
     | 0 => Initialise_graph g source
     | n + 1 => relax_all_edges g (Bellman_Ford_Aux g source w n) g.vertexCount  
 
-
-def negative_cycle_detection_edge (i : Nat) (edge : Edge Int) (w : Array BFVertex) : Bool :=
-    match w[i]!.distance with
-    | none => true
-    | some u => 
-        match w[edge.target]!.distance with
-        | none =>  true
-        | some v => 
-            if v  > u + edge.weight  then 
-              false
-            else
-              true
-
-def negative_cycle_detection (g : Graph α Int) (w : Array BFVertex) (nncycle : Bool) : Nat → Bool 
-    | 0 => nncycle
-    | n + 1 => Id.run do
-        let mut no_neg_cycle : Bool := true
-        for edge in g.vertices[n]!.adjacencyList do
-            no_neg_cycle :=
-              match (negative_cycle_detection_edge (n) edge w) with
-              | true => no_neg_cycle
-              | false => false
-        negative_cycle_detection g w (nncycle ∧ no_neg_cycle) n
 
 def BellmanFord! (g : Graph α Int) (source : Nat) : Array BFVertex :=
     let BFGraph : Array BFVertex := Bellman_Ford_Aux g source (mkArray g.vertexCount default) g.vertexCount
@@ -235,7 +236,8 @@ def w2 :=  dynamic_edge_addition g_final_1 w1 4 (4,2,-3)
 def dynamic_vertex_addition (g : Graph Nat Int) (w: Array BFVertex) (source : Nat) (vertex : Vertex Nat Nat) : Graph Nat Int × Array BFVertex := 
     let g_updated := (addVertex g vertex.payload).fst  
     ⟨ g_updated, (Bellman_Ford_Aux g_updated source w) 1⟩
-             
+
+#eval BellmanFord g_final 4 
 
 
      
