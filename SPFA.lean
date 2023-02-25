@@ -11,24 +11,15 @@ distance between i and source).
 
 ------Algorithm--------
 Initialize the output Distance and Predecessor arrays to infinity and null respectively (Distance from the
-source itself is, of course, zero). Then, for each edge (u, v) with weight w, we check if 
-distance[v] > distance[u] + w. If so, set distance[v] to (distance[u] + w) and set predecessor[v] to u.
-Repeat this |V| - 1 times, where |V| is the number of vertices in the graph.
+source itself is, of course, zero). Also, have a queue Q. Add source to Q and now, while Q is not empty,
+pop the first element out of the queue and then relax each edge in the adjacency list of this element (which
+is a vertex). Also, add the other vertex along each edge to Q if its not already in it. As mentioned before
+repeat this until Q is empty.
 
-Note that if the graph is disconnected, every vertex 'i' in a connected component not containing the source 
-will have Distance[i] = ∞.
+If this algorithm terminates, the Distance and Predecessor arrays will represent the shortest path distances 
+from source and the predecessor along this path for each vertex respectively.
 
-Now, on to negative cycle detection. For this, we go through every edge (u, v) with weight w in the graph
-and check if distance[u] + w < distance[v]. If so, let us have an array called NegativeEdges := [v, u].
-
-Now, check if for any edge (NegativeEdge[0], v) with weight w from the first element of NegativeEdges,
-we have distance[NegativeEdge[0]] + w < distance[v]. If so, add this vertex v to the beginning of
-NegativeEdges. Repeat this |V| - 1 times.
-
-Now that NegativeEdges is populated with the vertices forming a negative weight cycle, we run a cycle
-detection algorithm on NegativeEdges and report it.
-
-If there are no negative cycles detected, we return Distance and Predecessor.
+The algorithm, however, does not terminate if there are negative cycles in the graph.
 -------End of Algorithm--------
 
 -/
@@ -60,7 +51,7 @@ private def SPFAAux (g : Graph α Int) (current : Nat) (queue : List Nat) (BFVer
 decreasing_by sorry
 
 private def SPFAAuxBase (g : Graph α Int) (source : Nat) : Array (BFVertex) :=
-  let BFVerticesInitial : Array (BFVertex) := mkArray g.vertexCount {predecessor := source} -- predecessor is only a placeholder here, it has no significance and will be replaced or not used
+  let BFVerticesInitial : Array (BFVertex) := mkArray g.vertexCount {predecessor := source} 
   if h : source < BFVerticesInitial.size then
     let BFVertices := BFVerticesInitial.set ⟨source, h⟩ {predecessor := source, distance := some 0}
     let queue : List Nat := Id.run do
