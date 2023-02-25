@@ -99,6 +99,23 @@ instance : ToString BFShortestPathTree where toString t := toString t.BFVertices
 /-- Returns the distance from the root of the tree to a specific node. -/
 def distanceToVertex (t : BFShortestPathTree) (id : Nat) : Option Int := t.BFVertices[id]!.distance
 
+private def pathToVertexAux (t : BFShortestPathTree) (id : Nat) (pathSoFar : Path Int false) : Nat -> Path Int true
+  | 0 => panic! "This should not be possible" -- This case is impossible since the longest shortest path possible can contain atmost n-1 vertices
+  | n + 1 =>
+    let currentVertex := t.BFVertices[id]!
+    match currentVertex.distance with
+      | none => panic! "Current vertex in shortest path tree is not reachable, this should not be possible"
+      | some _ =>
+        let pathWithCurrentVertexAdded : Path Int true := Path.vertex id pathSoFar
+        if currentVertex.predecessor == id then pathWithCurrentVertexAdded else
+        let pathWithCurrentEdgeAdded : Path Int false := Path.edge currentVertex.edgeWeightToPredecessor pathWithCurrentVertexAdded
+        pathToVertexAux t currentVertex.predecessor pathWithCurrentEdgeAdded n
+
+/-- Returns the shortest path from the tree root to the specified vertex. -/
+def pathToVertex (t : BFShortestPathTree) (id : Nat) : Option (Path Int true) := match t.BFVertices[id]!.distance with
+  | none => none
+  | some _ => some (pathToVertexAux t id Path.empty t.BFVertices.size)
+
 end BFShortestPathTree
 ----------End of BFShortestPathTree-----
 
@@ -162,9 +179,12 @@ private def BFAuxBase (g : Graph α Int) (source : Nat) : Array (BFVertex) :=
   else
       panic! "source out of bounds"
 
-def BellmanFord (g : Graph α Int) (source : Nat) : BFShortestPathTree := ⟨ (BFAuxBase g source) ⟩ 
--------------End of BFAlgo---------------
--- def BellmanFord (g : Graph α Int) (source : Nat) : ShortestPathTree := (BFAuxBase g source none)
+def BellmanFord (g : Graph α Int) (source : Nat) : BFShortestPathTree := ⟨ (BFAuxBase g source) ⟩ -- call this function to turn BF Algorithm on a given graph g at vertex source.
+
+def BFShortestPath (g : Graph α Int) (source : Nat) (target : Nat) : Option (Path Int true) :=
+  let BFshortestPathTree : BFShortestPathTree := ⟨ (BFAuxBase g source ) ⟩
+  BFshortestPathTree.pathToVertex target
+
 -------------End of BFAlgo---------------
 
 def Initialise_graph (g : Graph α Int) (source : Nat): Array (BFVertex) := 
@@ -237,7 +257,8 @@ def dynamic_vertex_addition (g : Graph Nat Int) (w: Array BFVertex) (source : Na
     let g_updated := (addVertex g vertex.payload).fst  
     ⟨ g_updated, (Bellman_Ford_Aux g_updated source w) 1⟩
 
-#eval BellmanFord g_final 4 
+#eval BellmanFord g_final 4
+#eval BFShortestPath g_final 4 3
 
 
      
