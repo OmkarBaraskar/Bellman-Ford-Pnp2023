@@ -141,21 +141,16 @@ def relax (edge : Edge Int) (w: Array (BFVertex)) (i : Nat) : Array (BFVertex) :
 
 
 def relax_all_edges (g : Graph α Int) (w : Array BFVertex) : Nat → Array (BFVertex)
-    | 0 => Id.run do
-        let mut ret : Array BFVertex := Array.empty
-        for edge in g.vertices[0]!.adjacencyList do
-            ret := relax edge w 0
-        ret
+    | 0 => w
     | n + 1 => Id.run do
-        let mut ret : Array BFVertex := Array.empty
-        for edge in g.vertices[n+1]!.adjacencyList do
-            ret := relax edge w 0
+        let mut ret : Array BFVertex := w
+        for edge in g.vertices[n]!.adjacencyList do
+            ret := relax edge ret n
         relax_all_edges g ret n
 
 def Bellman_Ford_Aux (g : Graph α Int) (source : Nat) (w : Array BFVertex) : Nat → Array (BFVertex) 
     | 0 => Initialise_graph g source
-    | n + 1 => Id.run do
-        Bellman_Ford_Aux g source (relax_all_edges g w g.vertexCount) n
+    | n + 1 => relax_all_edges g (Bellman_Ford_Aux g source w n) g.vertexCount  
 
 
 def negative_cycle_detection_edge (i : Nat) (edge : Edge Int) (w : Array BFVertex) : Bool :=
@@ -171,19 +166,12 @@ def negative_cycle_detection_edge (i : Nat) (edge : Edge Int) (w : Array BFVerte
               true
 
 def negative_cycle_detection (g : Graph α Int) (w : Array BFVertex) (nncycle : Bool) : Nat → Bool 
-    | 0 => Id.run do
-        let mut no_neg_cycle : Bool := true
-        for edge in g.vertices[0]!.adjacencyList do
-            no_neg_cycle := 
-              match (negative_cycle_detection_edge 0 edge w) with
-              | true => no_neg_cycle
-              | false => false 
-        no_neg_cycle
+    | 0 => nncycle
     | n + 1 => Id.run do
         let mut no_neg_cycle : Bool := true
-        for edge in g.vertices[n+1]!.adjacencyList do
+        for edge in g.vertices[n]!.adjacencyList do
             no_neg_cycle :=
-              match (negative_cycle_detection_edge (n+1) edge w) with
+              match (negative_cycle_detection_edge (n) edge w) with
               | true => no_neg_cycle
               | false => false
         negative_cycle_detection g w (nncycle ∧ no_neg_cycle) n
@@ -191,9 +179,27 @@ def negative_cycle_detection (g : Graph α Int) (w : Array BFVertex) (nncycle : 
 def BellmanFord! (g : Graph α Int) (source : Nat) : Array BFVertex :=
     let BFGraph : Array BFVertex := Bellman_Ford_Aux g source (mkArray g.vertexCount default) g.vertexCount
     match (negative_cycle_detection g BFGraph true g.vertexCount) with
-    | true => (Bellman_Ford_Aux g source BFGraph) g.vertexCount
+    | true => BFGraph
     | false => panic! "The Graph has negative cycle"      
                 
+
+def g_array : Array Nat := #[1,2,3,4,5]
+
+def g : Graph Nat Int := makeGraphFromArray g_array
+
+def adding_edges_by_arrays (g : Graph Nat Int) (as : Array (Array Nat × Int)) : Graph Nat Int := Id.run do
+    let mut ret : Graph Nat Int := g
+    for i in as do
+        ret := addEdgeByID ret (i.fst[0]!-1) (i.fst[1]!-1) i.snd 
+    ret
+def g_final := adding_edges_by_arrays g (#[(#[1,2],5),(#[2,1],-2),(#[3,2],7),(#[4,3],9),(#[1,4],8),(#[1,3],-4),(#[5,1],6),(#[5,4],7),(#[3,5],2),(#[4,2],-3)])
+
+#eval g_final 
+
+#eval g_final.edgeCount
+
+#eval Bellman_Ford_Aux g_final 4 (mkArray g.vertexCount default) 4
+
 
 
              
