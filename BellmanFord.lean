@@ -103,22 +103,40 @@ end BFShortestPathTree
 ----------End of BFShortestPathTree-----
 
 ----------BFAlgo------------------------
--- private def BFAuxBase (g : Graph α Int) (source : Nat) (target : Option Nat) : Array (DijkstraVertex) :=
---   let dijkstraVerticesInitial : Array (DijkstraVertex) := mkArray g.vertexCount {predecessor := source} -- predecessor is only a placeholder here, it has no significance and will be replaced or not used
---   if h : source < dijkstraVerticesInitial.size then
---     let dijkstraVertices := dijkstraVerticesInitial.set ⟨source, h⟩ {predecessor := source, distance := some 0}
---     let isTargetFound : Bool := match target with
---       | some t => t == source
---       | none => false
---     if isTargetFound then dijkstraVertices
---     else
---       let unvisitedSet : Lean.HashSet Nat := Id.run do
---         let mut temp : Lean.HashSet Nat := Lean.HashSet.empty
---         for i in g.getAllVertexIDs do temp := temp.insert i
---         temp
---       dijkstraAux g source target (unvisitedSet.erase source) dijkstraVertices (unvisitedSet.size-1)
---   else
---       panic! "source out of bounds"
+/- BFAux2 takes the graph, a vertex and the BFVertices array and iterates over the edges from the vertex, updating
+distances and predecessors in BFVertices as described in the algorithm above.-/
+private def BFAux2 (g : Graph α Int) (vertex : Nat) (BFVerticesTemp : Array BFVertex) : Array BFVertex := Id.run do
+  let mut BFVertices : Array BFVertex := BFVerticesTemp
+  for edge in g.vertices[vertex]!.adjacencyList do -- for each edge in adj list of vertex
+    let tentativeDistance : Option Int := match BFVertices[vertex]!.distance with -- creating new distance for edge.target. treat "none" as infinity.
+      | some x => x + edge.weight
+      | none => none
+    let newBFVertex : BFVertex := {predecessor := vertex, distance := tentativeDistance, edgeWeightToPredecessor := edge.weight} -- new BFVertex to represent edge.target
+    BFVertices := match BFVertices[edge.target]!.distance with
+      | some x => match newBFVertex.distance with -- again, treat none as infinity here, and the logic should be clear. if previous distance is larger than new distance, replace the BFVertex. Otherwise let it be.
+                  | some y => if y < x then BFVertices.set! edge.target newBFVertex else BFVertices
+                  | none => BFVertices
+      | none => BFVertices.set! edge.target newBFVertex
+  return BFVertices
 
--- def BellmanFord (g : Graph α Int) (source : Nat) : ShortestPathTree := (BFAuxBase g source none)
+/- BFAux recurses over itself n times, where n = g.vertexCount - 1. Every iteration, it goes over every edge in the graph and updates distance and predecessors as described in the algorithm-/
+private def BFAux (g : Graph α Int) (BFVerticesTemp : Array BFVertex) : Nat -> Array BFVertex
+  | 0 => BFVerticesTemp
+  | n + 1 => Id.run do --for recursion
+    let mut BFVertices : Array BFVertex := BFVerticesTemp
+    for vertex in g.getAllVertexIDs do -- for each vertex in g, we update distances and predecessors for each edge in g.vertices[vertex].adjacencyList.
+      BFVertices := BFAux2 g vertex BFVertices
+    BFAux g BFVertices n --for recursion.
+
+private def BFAuxBase (g : Graph α Int) (source : Nat) : Array (BFVertex) :=
+  let BFVerticesInitial : Array (BFVertex) := mkArray g.vertexCount {predecessor := source} -- predecessor is only a placeholder here, it has no significance and will be replaced or not used
+  if h : source < BFVerticesInitial.size then
+    let BFVertices := BFVerticesInitial.set ⟨source, h⟩ {predecessor := source, distance := some 0}
+    let BFVerticesPreNegCycleCheck : Array (BFVertex) := BFAux g BFVertices (g.vertexCount - 1)
+    BFVerticesPreNegCycleCheck
+    /- Now, we need to add code for catching negative edges and detecting a negative cycle-/
+  else
+      panic! "source out of bounds"
+
+def BellmanFord (g : Graph α Int) (source : Nat) : BFShortestPathTree := ⟨ (BFAuxBase g source) ⟩ 
 -------------End of BFAlgo---------------
