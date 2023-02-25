@@ -200,10 +200,21 @@ def g_final := adding_edges_by_arrays g (#[(#[1,2],5),(#[2,1],-2),(#[3,2],7),(#[
 
 #eval Bellman_Ford_Aux g_final 4 (mkArray g.vertexCount default) 4
 
-#eval BellmanFord! g_final 4
+def w1 := BellmanFord! g_final 4
 
+def dynamic_edge_addition (g : Graph Nat Int) (w: Array BFVertex) (source : Nat) (edge : Nat × Nat × Int) : Graph Nat Int × Array BFVertex :=
+    let g_updated := addEdgeByID g edge.1 edge.2.1 edge.2.2
+    ⟨ g_updated, (Bellman_Ford_Aux g_updated source w) 1⟩ 
 
+def g_final_1 := adding_edges_by_arrays g (#[(#[1,2],5),(#[2,1],-2),(#[3,2],7),(#[4,3],9),(#[1,4],8),(#[1,3],-4),(#[5,1],6),(#[5,4],7),(#[3,5],2)])
 
+def w2 :=  dynamic_edge_addition g_final_1 w1 4 (4,2,-3)
+
+#eval w2
+
+def dynamic_vertex_addition (g : Graph Nat Int) (w: Array BFVertex) (source : Nat) (vertex : Vertex Nat Nat) : Graph Nat Int × Array BFVertex := 
+    let g_updated := (addVertex g vertex.payload).fst  
+    ⟨ g_updated, (Bellman_Ford_Aux g_updated source w) 1⟩
              
 
 
