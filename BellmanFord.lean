@@ -163,39 +163,39 @@ def BFShortestPath (g : Graph α Int) (source : Nat) (target : Nat) : Option (Pa
 
 -------------End of BFAlgo---------------
 
-def Initialise_graph (g : Graph α Int) (source : Nat): Array (BFVertex) := 
-    let ver : BFVertex :=   {predecessor:= 0, distance := some 0}  
-    Array.setD (mkArray g.vertexCount default) source ver
+-- def Initialise_graph (g : Graph α Int) (source : Nat): Array (BFVertex) := 
+--     let ver : BFVertex :=   {predecessor:= 0, distance := some 0}  
+--     Array.setD (mkArray g.vertexCount default) source ver
 
-def relax (edge : Edge Int) (w: Array (BFVertex)) (i : Nat) : Array (BFVertex) :=
-    match w[i]!.distance with
-    | none => w
-    | some u => 
-        match w[edge.target]!.distance with
-        | none =>  Array.setD w edge.target {predecessor := i,  distance := u + edge.weight}
-        | some v => 
-            if v  > u + edge.weight  then 
-              Array.setD w edge.target {predecessor := i, distance := u + edge.weight}
-            else
-              w
-
-
-def relax_all_edges (g : Graph α Int) (w : Array BFVertex) : Nat → Array (BFVertex)
-    | 0 => w
-    | n + 1 => Id.run do
-        let mut ret : Array BFVertex := w
-        for edge in g.vertices[n]!.adjacencyList do
-            ret := relax edge ret n
-        relax_all_edges g ret n
-
-def Bellman_Ford_Aux (g : Graph α Int) (source : Nat) (w : Array BFVertex) : Nat → Array (BFVertex) 
-    | 0 => Initialise_graph g source
-    | n + 1 => relax_all_edges g (Bellman_Ford_Aux g source w n) g.vertexCount  
+-- def relax (edge : Edge Int) (w: Array (BFVertex)) (i : Nat) : Array (BFVertex) :=
+--     match w[i]!.distance with
+--     | none => w
+--     | some u => 
+--         match w[edge.target]!.distance with
+--         | none =>  Array.setD w edge.target {predecessor := i,  distance := u + edge.weight}
+--         | some v => 
+--             if v  > u + edge.weight  then 
+--               Array.setD w edge.target {predecessor := i, distance := u + edge.weight}
+--             else
+--               w
 
 
-def BellmanFord! (g : Graph α Int) (source : Nat) : Array BFVertex :=
-    let BFGraph : Array BFVertex := Bellman_Ford_Aux g source (mkArray g.vertexCount default) g.vertexCount
-    match (negative_cycle_detection g BFGraph true g.vertexCount) with
-    | true => BFGraph
-    | false => panic! "The Graph has negative cycle"      
+-- def relax_all_edges (g : Graph α Int) (w : Array BFVertex) : Nat → Array (BFVertex)
+--     | 0 => w
+--     | n + 1 => Id.run do
+--         let mut ret : Array BFVertex := w
+--         for edge in g.vertices[n]!.adjacencyList do
+--             ret := relax edge ret n
+--         relax_all_edges g ret n
+
+-- def Bellman_Ford_Aux (g : Graph α Int) (source : Nat) (w : Array BFVertex) : Nat → Array (BFVertex) 
+--     | 0 => Initialise_graph g source
+--     | n + 1 => relax_all_edges g (Bellman_Ford_Aux g source w n) g.vertexCount  
+
+
+-- def BellmanFord! (g : Graph α Int) (source : Nat) : Array BFVertex :=
+--     let BFGraph : Array BFVertex := Bellman_Ford_Aux g source (mkArray g.vertexCount default) g.vertexCount
+--     match (negative_cycle_detection g BFGraph true g.vertexCount) with
+--     | true => BFGraph
+--     | false => panic! "The Graph has negative cycle"      
                 
