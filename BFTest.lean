@@ -1,5 +1,6 @@
 import BellmanFord
 import Graph
+import SPFA
 
 namespace Graph
 def g_array : Array Nat := #[1,2,3,4,5]
@@ -37,3 +38,4 @@ def dynamic_vertex_addition (g : Graph Nat Int) (w: Array BFVertex) (source : Na
 
 #eval BellmanFord g_final 4
 #eval BFShortestPath g_final 4 3
+#eval SPFA g_final 4
