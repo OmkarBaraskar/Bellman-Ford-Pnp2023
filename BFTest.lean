@@ -19,9 +19,7 @@ def g_final := adding_edges_by_arrays g (#[(#[1,2],5),(#[2,1],-2),(#[3,2],7),(#[
 
 #eval g_final.edgeCount
 
-#eval Bellman_Ford_Aux g_final 4 (mkArray g.vertexCount default) 4
-
-def w1 := BellmanFord! g_final 4
+def w1 := BellmanFord g_final 4
 
 def dynamic_edge_addition (g : Graph Nat Int) (w: Array BFVertex) (source : Nat) (edge : Nat × Nat × Int) : Graph Nat Int × Array BFVertex :=
     let g_updated := addEdgeByID g edge.1 edge.2.1 edge.2.2
