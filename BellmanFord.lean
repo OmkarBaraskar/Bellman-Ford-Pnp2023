@@ -200,6 +200,8 @@ def g_final := adding_edges_by_arrays g (#[(#[1,2],5),(#[2,1],-2),(#[3,2],7),(#[
 
 #eval Bellman_Ford_Aux g_final 4 (mkArray g.vertexCount default) 4
 
+#eval BellmanFord! g_final 4
+
 
 
              
