@@ -1,6 +1,7 @@
 import BellmanFord
-import Graph
 import SPFA
+import Graph
+
 
 namespace Graph
 def g_array : Array Nat := #[1,2,3,4,5]
