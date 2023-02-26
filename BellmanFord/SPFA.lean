@@ -1,4 +1,4 @@
-import BellmanFord
+import BellmanFord.BellmanFord
 import Graph
 namespace Graph
 
