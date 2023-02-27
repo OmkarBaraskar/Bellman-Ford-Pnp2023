@@ -2,6 +2,12 @@
 
 This is a repository for implementing the Bellman-Ford algorithm (and maybe other graph algorithms) in Lean4. This is done as a part of a course project for [Proofs and Programs 2023](http://math.iisc.ac.in/~gadgil/proofs-and-programs-2023/).
 
+## Current State
+
+We have implementations of Bellman Ford (with and without target) and SPFA. There is no guarantee for termination of SPFA, so currently we force lean4 to assume termination via `sorry`.
+
+We also have a partial implementation of Floyd Warshall algorithm.
+
 ## Goal
 
 The goal for this project is to implement the Bellman-Ford algorithm. Adding implementations for other graph-based algorithms (like improvements to Bellman-Ford, such as the Shorter Path Faster algorithm) and finding and proving useful properties about them are the following steps.
