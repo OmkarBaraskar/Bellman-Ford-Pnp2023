@@ -54,7 +54,7 @@ structure BFVertex where --BFVertices so we just make one array of BFVertex for 
   predecessor : Nat
   distance : Option Int := none
   edgeWeightToPredecessor : Int := 0
-
+deriving Repr, Inhabited
 instance : ToString BFVertex where toString dv := "Predecessor: " ++ (toString dv.predecessor) ++ ", current distance: " ++ (toString dv.distance) ++ "\n"
 instance : Inhabited BFVertex := ⟨ { predecessor := default } ⟩
 
