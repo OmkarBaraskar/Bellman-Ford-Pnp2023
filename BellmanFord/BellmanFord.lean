@@ -8,7 +8,7 @@ We want to take a (Graph α Int) i.e. a graph with payloads of type α and weigh
 vertex (type is ℕ because vertices are identified by their indices in Graph.vertices) and output an array of
 structure BFVertex where BFVertex for each vertex v stores 
   · predecessor : Nat : The element just before v in the shortest path from source to v
-  · distance : Option Int : The distance of v from source
+  · distance : Option Int : The distance of v from sourcessssssss
   · edgeWeightToPredecessor : Int
 
 ----------Algorithm----------
