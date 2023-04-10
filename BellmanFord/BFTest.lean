@@ -1,13 +1,9 @@
 import BellmanFord
 
-import Graph
-
-
-namespace Graph
 
 ----------Construction of Graph----------
 
-def g_array : Array Nat := #[1,2,3,4,5]
+def g_array : List Nat := [1,2,3,4,5]
 
 def g : Graph Nat Int := makeGraphFromArray g_array
 
@@ -47,6 +43,8 @@ def BF_weight_array_mod := BellmanFord g_final_mod 4
 def BF_weight_array_dyn := (BF_dynamic_edgeAdd g_final_mod BF_weight_array_mod ⟨ 0, 1, 5 ⟩).2
 
 #eval BF_weight_array_dyn
+
+example : BF_weight_array_dyn = BF_weight_array := rfl
 
 ---End of Dynamic Allocation testing---
 
