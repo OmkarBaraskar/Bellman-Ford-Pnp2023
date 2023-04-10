@@ -9,10 +9,6 @@ lean_lib «BellmanFord» {
   -- add library configuration options here
 }
 
-lean_lib «Graph_lib» {
-  -- add library configuration options here
-}
-
 require mathlib from git
   "https://github.com/leanprover-community/mathlib4.git"@"master"
 

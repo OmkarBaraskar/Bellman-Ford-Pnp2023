@@ -56,11 +56,9 @@ private def toString [ToString α] [ToString β] (v : Vertex α β) : String := 
 instance [ToString α] [ToString β] : ToString (Vertex α β) where toString := toString
 
 end Vertex
-
-instance [ToString α] [ToString β] : ToString (Graph α β) where toString :=
-  (λ g => toString (g.getAllVertexIDs.zip g.vertices))
-
 end Graph
+
+
 
 /---End of Graph Libray---/
 
@@ -95,6 +93,8 @@ If there are no negative cycles detected, we return Distance and Predecessor arr
 ----------End of Algorithm----------
 
 -/
+instance [ToString α] [ToString β] : ToString (Graph α β) where toString :=
+  (λ g => toString (g.getAllVertexIDs.zip g.vertices))
 
 namespace Graph
 
@@ -216,7 +216,7 @@ private def negative_cycle_detection (g : Graph α Int) (w : List BFVertex) (nnc
 
 private def BFAuxBase (g : Graph α Int) (source : Nat) : List (BFVertex) :=
   let BFVerticesInitial : List (BFVertex) := (mkArray g.vertexCount {predecessor := source}).toList -- predecessor is only a placeholder here, it has no significance and will be replaced or not used
-  if h : source < BFVerticesInitial.length then
+  if _ : source < BFVerticesInitial.length then
     let BFVertices := BFVerticesInitial.set source {predecessor := source, distance := some 0}
     let BFVerticesUpdated : List (BFVertex) := BFAux g BFVertices (g.vertexCount - 1)
     match (negative_cycle_detection g BFVerticesUpdated true g.vertexCount) with
