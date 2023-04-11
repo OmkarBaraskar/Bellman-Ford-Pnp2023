@@ -49,6 +49,7 @@ private def SPFAAux (g : Graph α Int) (current : Nat) (queue : List Nat) (BFVer
   else
     BFVerticesTemp
 decreasing_by sorry
+    
 
 private def SPFAAuxBase (g : Graph α Int) (source : Nat) : Array (BFVertex) :=
   let BFVerticesInitial : Array (BFVertex) := mkArray g.vertexCount {predecessor := source} 
