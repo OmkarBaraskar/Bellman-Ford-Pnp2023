@@ -60,9 +60,6 @@ end Graph
 
 namespace Graph
 
-structure finitePath where
-  path : List (Edge Int)
-  hyp : ∃ n : Nat, path.length = n
 
 def weightOfPath (p : List (Edge Int) ) (hyp : ∃ n : Nat, p.length = n) : Int := 
   match p with
