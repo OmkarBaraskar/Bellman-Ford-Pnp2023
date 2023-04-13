@@ -114,12 +114,16 @@ theorem conc_w (p1 : Path Int) (p2 : Path Int) : w (conc p1 p2) = w p1 + w p2 :=
   rw[w,w,w]
   simp[]
 
-
 -- def shortestPath : Path Int x Prop := 
 
-structure shortestPath where
+
+structure shortestPath (start : Nat) (finish : Nat) where
   path : Path Int
-  hyp : ∀ p' : Path Int, w path <= w p'
+  hyp_start : (h:path.edgeList.length > 0) → (path.edgeList[0]'(h)).source = start
+  hyp_end : (h:path.edgeList.length > 0) → ((path.edgeList[(path.edgeList.length)-1]'(by simp[h, Nat.sub_lt])).target = finish)
+  hyp : ∀ p : Path Int, 
+          (((h:p.edgeList.length > 0) → (p.edgeList[0]'(h)).source = start) ∧ 
+           ((h:p.edgeList.length > 0) → ((p.edgeList[(p.edgeList.length)-1]'(by simp[h, Nat.sub_lt])).target = finish))) → w path ≤  w p
 
 
 
