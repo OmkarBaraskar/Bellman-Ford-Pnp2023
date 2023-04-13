@@ -1,6 +1,7 @@
 namespace Graph
 
 structure Edge (β : Type) where
+  source : Nat
   target : Nat
   weight : β
 
@@ -42,7 +43,7 @@ def addVertex (g : Graph α β) (payload : α) : (Graph α β) × Nat :=
   (res, id)
 
 def addEdgeByID (g : Graph α β) (source : Nat) (target : Nat) (weight : β) : Graph α β := {
-  g with vertices := (g.vertices.toArray.modify source (λ vertex => { vertex with adjacencyList := (vertex.adjacencyList.toArray.push {target := target, weight := weight}).toList })).toList
+  g with vertices := (g.vertices.toArray.modify source (λ vertex => { vertex with adjacencyList := (vertex.adjacencyList.toArray.push {source := source, target := target, weight := weight}).toList })).toList
 }
 
 namespace Vertex
@@ -109,10 +110,17 @@ theorem conc_nil (p1 : Path Int) : (conc p1 null_path) = p1 := by
   simp[conc]
   simp[null_path]
                                                   
-theorem conc_w (p1 : Path Int) (p2 : Path Int) : w (conc p1 p2) = w p1 + w p2 := 
-  match p1.edgeList with
-  | [] => by 
-          simp[w]
-  | head :: tail => by sorry                 
+theorem conc_w (p1 : Path Int) (p2 : Path Int) : w (conc p1 p2) = w p1 + w p2 := by
+  rw[w,w,w]
+  simp[]
+
+
+-- def shortestPath : Path Int x Prop := 
+
+structure shortestPath where
+  path : Path Int
+  hyp : ∀ p' : Path Int, w path <= w p'
+
+
 
 
