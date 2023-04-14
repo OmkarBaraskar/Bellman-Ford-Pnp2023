@@ -46,6 +46,14 @@ def addEdgeByID (g : Graph α β) (source : Nat) (target : Nat) (weight : β) : 
   g with vertices := (g.vertices.toArray.modify source (λ vertex => { vertex with adjacencyList := (vertex.adjacencyList.toArray.push {source := source, target := target, weight := weight}).toList })).toList
 }
 
+def getAllEdges (g: Graph α β) : List (Edge β) := 
+  g.vertices.foldl (λ edgeListSoFar vertex => edgeListSoFar ++ vertex.adjacencyList) []
+
+instance [ToString β] : ToString (List (Edge β)) where toString :=
+  (λ list => "list" ++ list.foldr foldEdges "")
+  where foldEdges (e : Edge β) (s : String) : String :=
+    s ++ "   target: " ++ (ToString.toString e.target) ++ ", weight: " ++ (ToString.toString e.weight) ++ "\n"
+
 namespace Vertex
 
 private def toString [ToString α] [ToString β] (v : Vertex α β) : String := "\nVertex payload: " ++ ToString.toString v.payload ++ ", edges:\n" ++ v.adjacencyList.foldr foldEdges "" ++ "\n"
@@ -55,6 +63,10 @@ private def toString [ToString α] [ToString β] (v : Vertex α β) : String := 
 instance [ToString α] [ToString β] : ToString (Vertex α β) where toString := toString
 
 end Vertex
+
+instance [ToString α] [ToString β] : ToString (Graph α β) where toString :=
+  (λ g => toString (g.getAllVertexIDs.zip g.vertices))
+
 end Graph
 
 namespace Graph
@@ -63,6 +75,20 @@ structure Path (α :Type) where
   mk :: (edgeList : List (Edge Int)) (hyp : ∃ n : Nat, edgeList.length = n)
 
 def null_path : Path Int := ⟨ [] , by simp[]; exists 0 ⟩  
+
+def Pathsource (p: Path Int) : Nat :=
+  match p.edgeList with
+    |[] => p.edgeList.length
+    |head::_ => head.source
+
+def Pathtarget (p: Path Int) : Nat :=
+  match c:p.edgeList with
+    |[] => p.edgeList.length
+    |head::tail => (p.edgeList[p.edgeList.length-1]'(by 
+                                                      have hyp: p.edgeList.length > 0 := by
+                                                        rw[c]
+                                                        simp[Nat.succ_pos]
+                                                      simp[Nat.sub_lt, hyp])).target
 
 def w (p : Path Int) : Int :=
   match c: p.edgeList with
