@@ -136,9 +136,9 @@ theorem conc_nil (p1 : Path Int) : (conc p1 null_path) = p1 := by
   simp[conc]
   simp[null_path]
                                                   
-theorem conc_w (p1 : Path Int) (p2 : Path Int) : w (conc p1 p2) = w p1 + w p2 := by
-  rw[w,w,w]
-  simp[]
+-- theorem conc_w (p1 : Path Int) (p2 : Path Int) : w (conc p1 p2) = w p1 + w p2 := by
+--   rw[w,w,w]
+--   simp[]
 
 -- def shortestPath : Path Int x Prop := 
 
