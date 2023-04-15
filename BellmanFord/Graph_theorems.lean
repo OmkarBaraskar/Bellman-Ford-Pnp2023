@@ -1,3 +1,5 @@
+import Mathlib
+
 namespace Graph
 
 structure Edge (β : Type) where
@@ -72,9 +74,21 @@ end Graph
 namespace Graph
 
 structure Path (α :Type) where
-  mk :: (edgeList : List (Edge Int)) (hyp : ∃ n : Nat, edgeList.length = n)
+  edgeList : List (Edge α) 
+  hyp : ∃ n : Nat, edgeList.length = n
 
-def null_path : Path Int := ⟨ [] , by simp[]; exists 0 ⟩  
+@[ext] theorem Path.ext {α : Type} (p q : Path α) (h : p.edgeList = q.edgeList) : p = q := by
+  cases p
+  cases q
+  simp only [Path, edgeList] at h
+  subst h
+  rfl
+
+end Graph
+
+namespace Graph
+
+def null_path : Path Int := ⟨ [] , by simp[];  ⟩  
 
 def Pathsource (p: Path Int) : Nat :=
   match p.edgeList with
@@ -96,8 +110,6 @@ def w (p : Path Int) : Int :=
   | head::tail => have hyp2 : Eq (head::tail) p.edgeList  := by rw[c]
                   have hyp11 : tail.length = (head::tail).length - 1:= by
                       simp[]
-                      rw[Nat.succ_eq_add_one]
-                      apply Eq.refl
                   have hyp1 : ∃ m : Nat, tail.length = m := by
                     let ⟨ n, h ⟩ := p.hyp
                     rw[hyp2,h] at hyp11
@@ -109,7 +121,6 @@ decreasing_by
     rw [c,hyp2,hyp11]
     rw[c]
     simp[List.length_cons]
-    apply Nat.lt_of_succ_le (Nat.le_refl (Nat.succ tail.length))
 
 
 theorem List_add {α : Type} (l1 : List α ) (l2 : List α) : (l1 ++ l2).length = l1.length + l2.length := 
@@ -135,16 +146,59 @@ def conc (p1 : Path Int) (p2 : Path Int) : Path Int :=
 theorem conc_nil (p1 : Path Int) : (conc p1 null_path) = p1 := by
   simp[conc]
   simp[null_path]
+<<<<<<< Updated upstream
                                                   
 -- theorem conc_w (p1 : Path Int) (p2 : Path Int) : w (conc p1 p2) = w p1 + w p2 := by
 --   rw[w,w,w]
 --   simp[]
+=======
 
--- def shortestPath : Path Int x Prop := 
+theorem nil_conc (p1 : Path Int) : (conc null_path p1) = p1 := by
+  simp[conc]
+  simp[null_path]
+
+theorem w_null_path : w null_path = 0 := by
+  rw[w]
+  simp[null_path]
+
+example (x y : Nat) : (x + y) * (x + y) = x * x + y * x + x * y + y * y :=
+  have h1 : (x + y) * (x + y) = (x + y) * x + (x + y) * y :=
+    Nat.mul_add (x + y) x y
+  have h2 : (x + y) * (x + y) = x * x + y * x + (x * y + y * y) :=
+    (Nat.add_mul x y x) ▸ (Nat.add_mul x y y) ▸ h1
+  h2.trans (Nat.add_assoc (x * x + y * x) (x * y) (y * y)).symm
+
+>>>>>>> Stashed changes
+
+theorem conc_w (p1 p2 : Path Int) : w (conc p1 p2) = (w p1) + (w p2) := 
+  match c: p1.edgeList with
+  | [] => by  
+          have h : p1 = null_path := by
+           have h1 : p1.edgeList = null_path.edgeList := by 
+            rw[c,null_path]
+           apply Path.ext p1 null_path h1
+          rw[h,w_null_path]
+          simp[nil_conc]
+  | head :: tail => by
+    rw[w]   
+    simp[]
+    let tail_path : Path Int := ⟨ tail, by simp[] ⟩
+    have h : w p1 = head.weight + w tail_path := by sorry
+    have h1 : w tail_path + w p2 = w (conc tail_path p2) := by 
+      apply Eq.symm (conc_w tail_path p2)
+    have h2 : w p1 + w p2 = head.weight + w (conc tail_path p2) := by
+      rw[h]
+      /-
+      have h3 : (head.weight + w tail_path) + w p2 = head.weight + w (conc tail_path p2) := by
+        apply h1 ▸ (Nat.add_assoc head.weight (w tail_path) (w p2)) 
+      -/
+      sorry
+    
 
 
 structure shortestPath (start : Nat) (finish : Nat) where
   path : Path Int
+<<<<<<< Updated upstream
   hyp_start : (h:path.edgeList.length > 0) → (path.edgeList[0]'(h)).source = start
   hyp_end : (h:path.edgeList.length > 0) → ((path.edgeList[(path.edgeList.length)-1]'(by simp[h, Nat.sub_lt])).target = finish)
   hyp : ∀ p : Path Int, 
@@ -154,3 +208,6 @@ structure shortestPath (start : Nat) (finish : Nat) where
 
 
 
+=======
+  hyp : ∀ p' : Path Int, w path <= w p'
+>>>>>>> Stashed changes

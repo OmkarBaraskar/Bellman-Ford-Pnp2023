@@ -59,23 +59,7 @@ instance [ToString α] [ToString β] : ToString (Vertex α β) where toString :=
 end Vertex
 end Graph
 
-namespace Graph
 
-
-def weightOfPath (p : List (Edge Int) ) (hyp : ∃ n : Nat, p.length = n) : Int := 
-  match p with
-  | [] => 0
-  | head::tail => have hyp1 : ∃ m : Nat, tail.length = m := by
-                    have hyp11 : tail.length = (head::tail).length - 1:= by
-                      simp[]
-                      rw[Nat.succ_eq_add_one]
-                      apply Eq.refl
-                    let ⟨ n, h ⟩ := hyp
-                    rw[h] at hyp11
-                    exists n-1
-
-                  (head.weight + weightOfPath tail hyp1)
-end Graph
 
 
 /---End of Graph Libray---/
