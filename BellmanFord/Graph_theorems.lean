@@ -146,12 +146,6 @@ def conc (p1 : Path Int) (p2 : Path Int) : Path Int :=
 theorem conc_nil (p1 : Path Int) : (conc p1 null_path) = p1 := by
   simp[conc]
   simp[null_path]
-<<<<<<< Updated upstream
-                                                  
--- theorem conc_w (p1 : Path Int) (p2 : Path Int) : w (conc p1 p2) = w p1 + w p2 := by
---   rw[w,w,w]
---   simp[]
-=======
 
 theorem nil_conc (p1 : Path Int) : (conc null_path p1) = p1 := by
   simp[conc]
@@ -168,7 +162,6 @@ example (x y : Nat) : (x + y) * (x + y) = x * x + y * x + x * y + y * y :=
     (Nat.add_mul x y x) ▸ (Nat.add_mul x y y) ▸ h1
   h2.trans (Nat.add_assoc (x * x + y * x) (x * y) (y * y)).symm
 
->>>>>>> Stashed changes
 
 theorem conc_w (p1 p2 : Path Int) : w (conc p1 p2) = (w p1) + (w p2) := 
   match c: p1.edgeList with
@@ -193,21 +186,9 @@ theorem conc_w (p1 p2 : Path Int) : w (conc p1 p2) = (w p1) + (w p2) :=
         apply h1 ▸ (Nat.add_assoc head.weight (w tail_path) (w p2)) 
       -/
       sorry
-    
-
+    sorry
+decreasing_by sorry
 
 structure shortestPath (start : Nat) (finish : Nat) where
   path : Path Int
-<<<<<<< Updated upstream
-  hyp_start : (h:path.edgeList.length > 0) → (path.edgeList[0]'(h)).source = start
-  hyp_end : (h:path.edgeList.length > 0) → ((path.edgeList[(path.edgeList.length)-1]'(by simp[h, Nat.sub_lt])).target = finish)
-  hyp : ∀ p : Path Int, 
-          (((h:p.edgeList.length > 0) → (p.edgeList[0]'(h)).source = start) ∧ 
-           ((h:p.edgeList.length > 0) → ((p.edgeList[(p.edgeList.length)-1]'(by simp[h, Nat.sub_lt])).target = finish))) → w path ≤  w p
-
-
-
-
-=======
   hyp : ∀ p' : Path Int, w path <= w p'
->>>>>>> Stashed changes
