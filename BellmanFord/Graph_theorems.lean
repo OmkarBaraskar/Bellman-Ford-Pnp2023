@@ -2,44 +2,64 @@ import Mathlib
 
 namespace Graph
 
-structure Edge (β : Type) where
-  source : Nat
-  target : Nat
+/-- Edge of a graph with `n` vertices -/
+structure Edge (n : ℕ)(β : Type) where
+  source : Fin n
+  target : Fin n
   weight : β
 
-structure Vertex (α : Type) (β : Type) where
-  payload : α
-  adjacencyList : List (Edge β) := []
+structure Vertex (n: ℕ)(α : Type) (β : Type) where
+  index : Fin n
+  adjacencyList : List (Edge n β) 
 
-instance [Inhabited α] : Inhabited (Vertex α β) := ⟨ { payload := default } ⟩
+def Vertex.isolated (n : ℕ)(α : Type) (β : Type)
+  (k : ℕ) (hyp : k < n) : Vertex n α β := ⟨⟨k, hyp⟩, []⟩
+
+#check List.finRange
+
+-- instance (n : ℕ)[Inhabited α] : Inhabited (Vertex n α β) := 
+--   ⟨{adjacencyList := []}⟩
 
 end Graph
 
-structure Graph (α : Type) (β : Type) where
-  vertices : List (Graph.Vertex α β) := []
+structure Graph (n : ℕ)(α : Type) (β : Type) where
+  vertices : List (Graph.Vertex n α β) 
+
+
+structure FullGraph (n : ℕ)(α : Type) (β : Type) where
+  adjacencyList : Fin n → List (Graph.Edge n β) 
+
+def FullGraph.toGraph (n : ℕ)(α : Type) (β : Type) (g : FullGraph n α β) : Graph n α β := ⟨
+  (List.finRange n).map fun ⟨k, bd⟩ => ⟨⟨k, bd⟩, g.adjacencyList ⟨k, bd⟩⟩⟩
 
 namespace Graph
 
 variable {α : Type} [Inhabited α] {β : Type}
 
 /-- Empty graph, α is the vertex payload type, β is edge weight type --/
-def empty : Graph α β := ⟨[]⟩
+def empty (n : ℕ) : Graph n α β := ⟨[]⟩
+
+def discrete (n : ℕ) (α : Type) (β : Type) : Graph n α β := ⟨
+  (List.finRange n).map fun ⟨k, bd⟩ => Vertex.isolated n α β k bd ⟩
 
 /-- Total edge count in the graph. -/
-def edgeCount (g : Graph α β) : Nat := g.vertices.foldr (λ vertex count => vertex.adjacencyList.length + count) 0
+def edgeCount (n : ℕ) (g : Graph n α β) : Nat := g.vertices.foldr (λ vertex count => vertex.adjacencyList.length + count) 0
 
-def vertexCount (g : Graph α β) : Nat := g.vertices.length
+def vertexCount (n : ℕ)(g : Graph n α β) : Nat := g.vertices.length
 
-def getAllVertexIDs (g : Graph α β) : List Nat := Id.run do
+def getAllVertexIndices (n : ℕ)(g : Graph n α β) : List (Fin n) :=
+  g.vertices.map (fun vertex ↦ vertex.index)
+
+def getAllVertexIDs (n : ℕ)(g : Graph n α β) : List Nat := Id.run do
   let mut arr := mkArray g.vertexCount 0
   for i in [0:g.vertexCount] do arr := arr.set! i i
   arr.toList
 
-def makeGraphFromArray (a : List α) : Graph α β := ⟨
-  a.map (λ element => { payload := element } )
-⟩
+-- def makeGraphFromArray (n : ℕ)(a : List α) : Graph n α β := ⟨
+--   a.map (λ element => { payload := element } )
+-- ⟩
 
-def addVertex (g : Graph α β) (payload : α) : (Graph α β) × Nat :=
+def addVertex (n : ℕ)(g : Graph n α β)  : (Graph n α β) × Nat :=
   let res := { g with vertices := g.vertices.append [{ payload := payload }] }
   let id : Nat := res.vertexCount - 1
   (res, id)
@@ -73,11 +93,15 @@ end Graph
 
 namespace Graph
 
-structure Path (α :Type) where
-  edgeList : List (Edge α) 
+inductive EdgePath (n : ℕ)(α :Type) : Fin n → Fin n → Type   where
+| point (v : Fin n) : EdgePath n α v v
+| cons  (e : Edge n α) (w : Fin n) (p : EdgePath n α e.target w) : EdgePath n α e.source w
+
+structure Path (n : ℕ)(α :Type) where
+  edgeList : List (Edge n α) 
   hyp : ∃ n : Nat, edgeList.length = n
 
-@[ext] theorem Path.ext {α : Type} (p q : Path α) (h : p.edgeList = q.edgeList) : p = q := by
+@[ext] theorem Path.ext {α : Type} (p q : Path n α) (h : p.edgeList = q.edgeList) : p = q := by
   cases p
   cases q
   simp only [Path, edgeList] at h
@@ -104,7 +128,7 @@ def Pathtarget (p: Path Int) : Nat :=
                                                         simp[Nat.succ_pos]
                                                       simp[Nat.sub_lt, hyp])).target
 
-def w (p : Path Int) : Int :=
+def w (n : ℕ) (p : Path n Int) : Int :=
   match c: p.edgeList with
   | [] => 0
   | head::tail => have hyp2 : Eq (head::tail) p.edgeList  := by rw[c]
@@ -114,8 +138,8 @@ def w (p : Path Int) : Int :=
                     let ⟨ n, h ⟩ := p.hyp
                     rw[hyp2,h] at hyp11
                     exists n-1
-                  (head.weight + w ⟨ tail, hyp1 ⟩ )
-termination_by w p => p.edgeList.length
+                  (head.weight + w n ⟨ tail, hyp1 ⟩ )
+termination_by w _ p => p.edgeList.length
 decreasing_by 
     simp_wf
     rw [c,hyp2,hyp11]
@@ -163,7 +187,7 @@ example (x y : Nat) : (x + y) * (x + y) = x * x + y * x + x * y + y * y :=
   h2.trans (Nat.add_assoc (x * x + y * x) (x * y) (y * y)).symm
 
 
-theorem conc_w (p1 p2 : Path Int) : w (conc p1 p2) = (w p1) + (w p2) := 
+theorem conc_w (n : ℕ)(p1 p2 : Path n Int) : w (conc p1 p2) = (w p1) + (w p2) := 
   match c: p1.edgeList with
   | [] => by  
           have h : p1 = null_path := by
@@ -174,9 +198,11 @@ theorem conc_w (p1 p2 : Path Int) : w (conc p1 p2) = (w p1) + (w p2) :=
           simp[nil_conc]
   | head :: tail => by
     rw[w]   
+    rw [c]
     simp[]
     let tail_path : Path Int := ⟨ tail, by simp[] ⟩
-    have h : w p1 = head.weight + w tail_path := by sorry
+    have h : w p1 = head.weight + w tail_path := by 
+      sorry
     have h1 : w tail_path + w p2 = w (conc tail_path p2) := by 
       apply Eq.symm (conc_w tail_path p2)
     have h2 : w p1 + w p2 = head.weight + w (conc tail_path p2) := by
