@@ -97,6 +97,18 @@ inductive EdgePath (n : ℕ)(α :Type) : Fin n → Fin n → Type   where
 | point (v : Fin n) : EdgePath n α v v
 | cons  (e : Edge n α) (w : Fin n) (p : EdgePath n α e.target w) : EdgePath n α e.source w
 
+def weight (n : ℕ)(a b : Fin n)(p : EdgePath n ℕ a b) : ℕ  := 
+  match p with
+  |EdgePath.point _  => 0
+  |EdgePath.cons e _ p' => e.weight
+
+theorem weight_nonneg (n : ℕ)(a b : Fin n)(p : EdgePath n ℕ a b) : 0 ≤ weight n a b p := by
+  induction p
+  case point v => simp
+  case cons e w p ih => 
+    rw [weight]
+    simp? 
+
 structure Path (n : ℕ)(α :Type) where
   edgeList : List (Edge n α) 
   hyp : ∃ n : Nat, edgeList.length = n
