@@ -39,7 +39,6 @@ def length (p : EdgePath n a b) : Nat :=
   |EdgePath.point _  => 0
   |EdgePath.cons _ _ p' => 1 + length p'
 
-
 /- BF starts-/
 
 def relax_edge (BFList_and_hyp : BFListLengthHyp n) (edge : Edge n) : BFListLengthHyp n :=
@@ -69,10 +68,13 @@ def BellmanFord (g : Graph n) (source : Fin n) : BFListLengthHyp n :=
 
 def BFPathmaker (source : Fin n)(target : Fin n)(BFListhyp : BFListLengthHyp n) : EdgePath n source target :=
   let ⟨ dist, pred, weight ⟩:= BFListhyp.BFList[target]'(by simp[BFListhyp.hyp])
-  if c: source = target then
-    EdgePath.point source
+  if c: source = target then by 
+    rw[<- c]
+    exact EdgePath.point source
   else
     EdgePath.cons ⟨ pred, target, weight⟩ source (BFPathmaker source pred BFListhyp)
+decreasing_by sorry
+
 
 def pathViaBellmanFord (g : Graph n) (source : Fin n) (target : Fin n) : EdgePath n source target :=
   let BFListhyp : BFListLengthHyp n := BellmanFord g source
@@ -90,7 +92,6 @@ theorem relax_gives_dist_eq_path (source : Fin n) (i : Fin n) (g : Graph n) (BFL
     (((BFListhyp.BFList[i]'(by simp[BFListhyp.hyp])).distance ≠ none) →
     (∃ p : (EdgePath n source i), (BFListhyp.BFList[i]'(by simp[BFListhyp.hyp])).distance = weight p)) := by
       sorry
-    
 
 -- theorem relax_dist_atmost_shortest (source : Fin n) (i : Fin n) (g : Graph n) (BFListhyp : BFListLengthHyp n) (counter : Nat)
 --   (BFList_is_from_BellmanFord : BFListhyp = relax g (initialized source) counter):
