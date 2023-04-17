@@ -108,17 +108,17 @@ theorem relax_edge_leq (edge : Edge n) (hyp : edge ∈ g.edges) (paths : (index 
       sorry
 
 
-theorem relax_gives_dist_eq_path (source : Fin n) (i : Fin n) (g : Graph n) (BFListhyp : BFListLengthHyp n) (counter : Nat)
-  (BFList_is_after_counter_relaxes : BFListhyp = relax g (initialized source) counter):
-    (((BFListhyp.BFList[i]'(by simp[BFListhyp.hyp])).distance ≠ none) →
-    (∃ p : (EdgePath n source i), (BFListhyp.BFList[i]'(by simp[BFListhyp.hyp])).distance = weight p)) := by
-      sorry
+-- theorem relax_gives_dist_eq_path (source : Fin n) (i : Fin n) (g : Graph n) (BFListhyp : BFListLengthHyp n) (counter : Nat)
+--   (BFList_is_after_counter_relaxes : BFListhyp = relax g (initialized source) counter):
+--     (((BFListhyp.BFList[i]'(by simp[BFListhyp.hyp])).distance ≠ none) →
+--     (∃ p : (EdgePath n source i), (BFListhyp.BFList[i]'(by simp[BFListhyp.hyp])).distance = weight p)) := by
+--       sorry
     
 
--- theorem relax_dist_atmost_shortest (source : Fin n) (i : Fin n) (g : Graph n) (BFListhyp : BFListLengthHyp n) (counter : Nat)
---   (BFList_is_from_BellmanFord : BFListhyp = relax g (initialized source) counter):
+-- -- theorem relax_dist_atmost_shortest (source : Fin n) (i : Fin n) (g : Graph n) (BFListhyp : BFListLengthHyp n) (counter : Nat)
+-- --   (BFList_is_from_BellmanFord : BFListhyp = relax g (initialized source) counter):
 
-theorem BellmanFord_gives_shortest_path (source : Fin n) (i : Fin n) (g : Graph n) (BFListhyp : BFListLengthHyp n)
-  (BFList_is_from_BellmanFord : BFListhyp = BellmanFord g source):
-    ∀ p : EdgePath n source i, weight p ≥ weight (pathViaBellmanFord g source i) := by
-      sorry
+-- theorem BellmanFord_gives_shortest_path (source : Fin n) (i : Fin n) (g : Graph n) (BFListhyp : BFListLengthHyp n)
+--   (BFList_is_from_BellmanFord : BFListhyp = BellmanFord g source):
+--     ∀ p : EdgePath n source i, weight p ≥ weight (pathViaBellmanFord g source i) := by
+--       sorry
