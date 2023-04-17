@@ -53,7 +53,7 @@ def length (p : EdgePath g a b) : Nat :=
 --   have BF_len_eq_n : BF0.length = n := by simp[]
 --   ⟨ BF0, BF_len_eq_n⟩ 
 
-def initPaths (source : Fin n) : (index: Fin n) → Option (EdgePath g source index) :=
+def initPaths (g : Graph n) (source : Fin n) : (index: Fin n) → Option (EdgePath g source index) :=
   let temp : (index: Fin n) → Option (EdgePath g source index) := fun index ↦ if h:index = source then (some (by rw[h]; exact EdgePath.point source)) else none
   temp
 
@@ -89,7 +89,7 @@ def relax (g : Graph n) (BFn : (index : Fin n) → Option (EdgePath g source ind
 
 
 def BellmanFord (g : Graph n) (source : Fin n) : (index : Fin n) → Option (EdgePath g source index) :=
-  relax g (initPaths source) (n - 1)
+  relax g (initPaths g source) (n - 1)
   
 
 /- BF Ends-/
@@ -97,6 +97,14 @@ def BellmanFord (g : Graph n) (source : Fin n) : (index : Fin n) → Option (Edg
 /- Proof -/
 
 #check Option.get
+
+theorem init_path_some_source (g : Graph n) (source : Fin n) (i : Fin n) : ((initPaths g source) i).isSome → i = source := by
+  have lm : ¬ i = source → ¬ (initPaths g source i).isSome := by
+    intro hyp
+    simp[initPaths, hyp]
+  rw[not_imp_not] at lm
+  assumption
+
 
 theorem relax_edge_some (edge : Edge n) (hyp : edge ∈ g.edges) (paths : (index : Fin n) → Option (EdgePath g source index))
   (h1 : (paths edge.source).isSome)
@@ -174,6 +182,6 @@ theorem relax_edge_leq (edge : Edge n) (hyp : edge ∈ g.edges) (paths : (index 
 --       sorry
 
 theorem BellmanFordAux (source : Fin n) (counter : Nat) (i: Fin n): 
-    (h: ((relax g (initPaths source) (counter + 1)) i).isSome) → 
-  (p : (EdgePath g source i)) →  (h1 : (length p ≤ counter + 1)) → (weight p ≥ weight (((relax g (initPaths source) (counter + 1)) i).get h)) := by
+    (h: ((relax g (initPaths g source) (counter + 1)) i).isSome) → 
+  (p : (EdgePath g source i)) →  (h1 : (length p ≤ counter + 1)) → (weight p ≥ weight (((relax g (initPaths g source) (counter + 1)) i).get h)) := by
   sorry
