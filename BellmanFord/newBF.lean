@@ -100,12 +100,29 @@ def BellmanFord (g : Graph n) (source : Fin n) : (index : Fin n) → Option (Edg
 
 theorem relax_edge_some (edge : Edge n) (hyp : edge ∈ g.edges) (paths : (index : Fin n) → Option (EdgePath g source index))
   (h1 : (paths edge.source).isSome)
-  : ((relax_edge paths edge hyp) edge.target).isSome:= by sorry
+  : ((relax_edge paths edge hyp) edge.target).isSome:= by
+    match h :(paths edge.source) with
+      | none => rw[h] at h1
+                contradiction
+      | some u => match j : (paths edge.target) with
+                  | none => rw[relax_edge]
+                            simp[h, j]
+                  | some v => rw[relax_edge]
+                              simp[h, j]
+                              split
+                              · simp[]
+                              · simp[j]
+
 
 theorem relax_edge_leq (edge : Edge n) (hyp : edge ∈ g.edges) (paths : (index : Fin n) → Option (EdgePath g source index))
   (h1 : (paths edge.source).isSome) (h2 : (paths edge.target).isSome)
   : (weight (((relax_edge paths edge hyp) edge.target).get (by exact relax_edge_some edge hyp paths h1)) ≤ (weight ((paths edge.target).get h2)) ) := by 
-      sorry
+      match h :(paths edge.source) with
+      | none => rw[h] at h1
+                contradiction
+      | some u => match j : (paths edge.target) with
+                  | none => sorry
+                  | some v => sorry
 
 
 -- theorem relax_gives_dist_eq_path (source : Fin n) (i : Fin n) (g : Graph n) (BFListhyp : BFListLengthHyp n) (counter : Nat)
