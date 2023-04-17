@@ -120,9 +120,20 @@ theorem relax_edge_leq (edge : Edge n) (hyp : edge ∈ g.edges) (paths : (index 
       match h :(paths edge.source) with
       | none => rw[h] at h1
                 contradiction
-      | some u => match j : (paths edge.target) with
-                  | none => sorry
-                  | some v => sorry
+      | some u => let v := (paths edge.target).get h2
+                  if cond : weight v > weight u + edge.weight then
+                    sorry
+                  else
+                    have lm : (relax_edge paths edge hyp edge.target) = paths edge.target := by
+                      rw[relax_edge]
+                      simp[h, cond]
+                      match j: paths edge.target with
+                        | none => rw[j] at h2; contradiction
+                        | some v1 => have lm2 : v1 = v := by simp[j]
+                                     simp[]
+                                     sorry
+                    sorry
+                        
 
 
 -- theorem relax_gives_dist_eq_path (source : Fin n) (i : Fin n) (g : Graph n) (BFListhyp : BFListLengthHyp n) (counter : Nat)
@@ -139,3 +150,8 @@ theorem relax_edge_leq (edge : Edge n) (hyp : edge ∈ g.edges) (paths : (index 
 --   (BFList_is_from_BellmanFord : BFListhyp = BellmanFord g source):
 --     ∀ p : EdgePath n source i, weight p ≥ weight (pathViaBellmanFord g source i) := by
 --       sorry
+
+theorem BellmanFordAux (source : Fin n) (counter : Nat) (i: Fin n): 
+    (h: ((relax g (initPaths source) (counter + 1)) i).isSome) → 
+  (p : (EdgePath g source i)) →  (h1 : (length p ≤ counter + 1)) → (weight p ≥ weight (((relax g (initPaths source) (counter + 1)) i).get h)) := by
+  sorry
