@@ -52,6 +52,12 @@ theorem len_zero_imp_weight_zero (p : EdgePath g a b) : length p = 0 → weight 
   match p with
   | EdgePath.point c => simp[weight]
   | EdgePath.cons e _ _ p' => simp[length] at hyp
+  
+theorem length_geq_zero (p : EdgePath g a b) : length p ≥ 0 := by
+  induction p
+  case point => simp[]
+  case cons e _ _ p' _ => simp[]
+ 
 
 -- structure BFVertex (n : Nat) where
 --   distance : Option Int
@@ -212,7 +218,18 @@ theorem relax_edge_leq (edge : Edge n) (hyp : edge ∈ g.edges) (paths : (index 
 --     ∀ p : EdgePath n source i, weight p ≥ weight (pathViaBellmanFord g source i) := by
 --       sorry
 
-theorem BellmanFordAux (source : Fin n) (counter : Nat) (i: Fin n): 
-    (h: ((relax g (initPaths g source) (counter + 1)) i).isSome) → 
-  (p : (EdgePath g source i)) →  (h1 : (length p ≤ counter + 1)) → (weight p ≥ weight (((relax g (initPaths g source) (counter + 1)) i).get h)) := by
-  sorry
+theorem BellmanFordAux (source : Fin n) (counter : Nat) (source i: Fin n):
+    (h: ((relax g (initPaths g source) (counter)) i).isSome) → 
+  (p : (EdgePath g source i)) →  (h1 : (length p ≤ counter)) → (weight p ≥ weight (((relax g (initPaths g source) (counter)) i).get h)) := by
+  --let BF_paths_curr := (relax g (initPaths source) (counter))
+  induction counter
+  case zero =>
+    intro h p h1
+    simp[relax]
+    simp[length_geq_zero] at h1
+    simp[h1,len_zero_imp_weight_zero]
+    have h2 : i = source := (init_path_some_source g source i) h
+    sorry
+
+    
+  
