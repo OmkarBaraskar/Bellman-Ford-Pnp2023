@@ -7,12 +7,35 @@ structure Edge (n : Nat) where
   target : Fin n
   weight : Int
 
+#check List.toString
+
+instance : ToString (Edge n) where toString edge := "edge (" ++ (toString edge.source) ++ ", " ++ (toString edge.target) ++ ") weight: " ++ (toString edge.weight) ++ "\n"
+
 structure Graph (n : Nat) where
   edges : List (Edge n)
+
+instance : ToString (Graph n) where toString graph := toString graph.edges
 
 inductive EdgePath (g : Graph n) : Fin n → Fin n → Type   where
 | point (v : Fin n) : EdgePath g v v
 | cons  (e : Edge n) (w : Fin n) (hyp : e ∈ g.edges) (p : EdgePath g w e.source) : EdgePath g w e.target
+
+def get_path_edges (n : Nat) (g : Graph n) (a : Fin n) (b : Fin n) (path : EdgePath g a b) : List (Edge n) :=
+  match path with
+  | EdgePath.point c => [{source := c, target := c, weight := 0}]
+  | EdgePath.cons edge _ _ p => [⟨ edge.source, edge.target, edge.weight⟩ ] ++ get_path_edges n g a edge.source p
+
+instance : ToString (EdgePath g a b) where toString path := toString (get_path_edges _ g a b path)
+
+def graph1 : Graph 4 :=
+  {edges := [⟨ 0, 2, 3⟩ , ⟨1, 3, 5⟩ , ⟨ 2, 3, 4⟩ , ⟨ 3, 1, -2⟩  ]}
+
+#eval graph1
+
+def path1 : EdgePath graph1 0 3 :=
+  EdgePath.cons ⟨ 2, 3, 4⟩ 0 (by rw[graph1]; simp[]) (EdgePath.cons ⟨ 0, 2, 3⟩ 0 (by rw[graph1]; simp[]) (EdgePath.point 0))
+
+#eval path1
 
 def weight (p : EdgePath g a b) : Int := 
   match p with
