@@ -142,8 +142,6 @@ def pathViaBellmanFord (g : Graph n) (source : Fin n) (target : Fin n) : EdgePat
 
 #check Option
 
-theorem init_BFList_1 (source : Fin n) : i = source →   Ne ((initialized source).BFList[i]'(by sorry)).distance  none := sorry
-
 theorem init_BFList_2 (source : Fin n) : Ne ((initialized source).BFList[i]'(by simp[(initialized source).hyp])).distance  none → i = source  := by
   intro j
   have h : i ≠ source → ((initialized source).BFList[i]'(by simp[(initialized source).hyp])).distance.isNone := by
