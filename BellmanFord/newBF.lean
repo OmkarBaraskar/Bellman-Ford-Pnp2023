@@ -123,6 +123,8 @@ def BellmanFord (g : Graph n) (source : Fin n) : (index : Fin n) → Option (Edg
 
 /- BF Ends-/
 
+#eval (BellmanFord graph1 2 3)
+
 /- Proof -/
 
 #check Option.get
