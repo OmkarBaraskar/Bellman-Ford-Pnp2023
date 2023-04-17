@@ -50,7 +50,29 @@ theorem initialized_non_source_dist_none (i : Fin n) : i ≠ source → ((initia
   rw[h6]
   simp[] 
 
-
+theorem initialized_dist_none_non_source (i : Fin n) : ((initialized source).BFList[i]'(by simp[(initialized source).hyp])).distance.isNone → i ≠ source := by
+  -- intro h
+  let base : BFVertex n := {distance := none, predecessor := source}
+  let init : List (BFVertex n) := List.map (fun _ ↦ base ) (List.finRange n)
+  let BF0 : List (BFVertex n) := init.set source {predecessor := source, distance := some 0}
+  have BF_len_eq_n : BF0.length = n := by simp[]
+  let inited : BFPath n := ⟨ BF0, BF_len_eq_n⟩ 
+  have h1 : (initialized source) = inited := by
+    rw[initialized]
+  -- rw[h1] at h
+  have h2: inited.BFList = BF0 := by simp[]
+  have h3: inited.BFList[i] = BF0[i] := by simp[h2]
+  -- rw[h3] at h
+  have contrapos (k : Not (i ≠ source)) : Not ((initialized source).BFList[i]'(by simp[(initialized source).hyp])).distance.isNone := by
+    simp[] at k
+    rw[h1, h3]
+    have k1 : BF0[i] = {predecessor := source, distance := some 0} := by
+      simp[k]
+    have k2 : BF0[i].distance = some 0:= by rw[k1]
+    rw[k2]
+    simp[]
+  rw[not_imp_not] at contrapos
+  assumption
 
 
 inductive EdgePath (n : ℕ) : Fin n → Fin n → Type   where
