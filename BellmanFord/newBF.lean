@@ -24,6 +24,12 @@ def length (p : EdgePath g a b) : Nat :=
   |EdgePath.point _  => 0
   |EdgePath.cons _ _ _ p' => 1 + length p'
 
+theorem len_zero_imp_weight_zero (p : EdgePath g a b) : length p = 0 → weight p = 0 := by
+  intro hyp
+  match p with
+  | EdgePath.point c => simp[weight]
+  | EdgePath.cons e _ _ p' => simp[length] at hyp
+
 -- structure BFVertex (n : Nat) where
 --   distance : Option Int
 --   predecessor : Fin n
