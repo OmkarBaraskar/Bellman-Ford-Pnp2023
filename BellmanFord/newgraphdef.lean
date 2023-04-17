@@ -23,7 +23,7 @@ def initialized (source : Fin n): BFPath n:=
   let init : List (BFVertex n) := List.map (fun _ ↦ {distance := none, predecessor := source} ) (List.finRange n)
   let BF0 : List (BFVertex n) := init.set source {predecessor := source, distance := some 0}
   have BF_len_eq_n : BF0.length = n := by simp[]
-  ⟨ BF0, BF_len_eq_n⟩ 
+  ⟨ BF0, BF_len_eq_n⟩
 
 inductive EdgePath (n : ℕ) : Fin n → Fin n → Type   where
 | point (v : Fin n) : EdgePath n v v
@@ -59,8 +59,11 @@ def relax_edge (BFList_and_hyp : BFPath n) (edge : Edge n) : BFPath n :=
 def relax (g : Graph n) (BFn : BFPath n) (counter : Nat) : BFPath n := 
   match counter with
   | 0 => BFn
-  | m + 1 => let BFnplus1 : BFPath n := g.edges.foldl (fun bflist edge ↦ relax_edge bflist edge) BFn
-             relax g BFnplus1 m
+  | m + 1 => relax g (g.edges.foldl (fun bflist edge ↦ relax_edge bflist edge) BFn) m
+
+theorem relax_recur (g : Graph n) (BFn : BFPath n) (counter : Nat) : 
+  relax g BFn (counter + 1) = relax g (g.edges.foldl (fun bflist edge ↦ relax_edge bflist edge) BFn) counter :=
+      by simp[relax]
              
 
 def BellmanFord (g : Graph n) (source : Fin n) : BFPath n :=
@@ -89,18 +92,34 @@ def pathViaBellmanFord (g : Graph n) (source : Fin n) (target : Fin n) : EdgePat
 
 #check Option
 
-theorem relax_gives_dist_eq_path (source : Fin n) (i : Fin n) (g : Graph n) (BFList_curr : BFPath n) (counter : Nat)
+theorem init_BFList_1 (source : Fin n) : i = source →   Ne ((initialized source).BFList[i]'(by sorry)).distance  none := sorry
+
+theorem init_BFList_2 (source : Fin n) : Ne ((initialized source).BFList[i]'(by sorry)).distance  none → i = source  := sorry
+
+theorem relax_gives_dist_eq_path (source : Fin n) (g : Graph n) (BFList_curr : BFPath n) (counter : Nat)
   (BFList_after_relaxation : BFList_curr = relax g (initialized source) counter):
-    (((BFList_curr.BFList[i]'(by simp[BFList_curr.hyp])).distance ≠ none) →
+    (i : Fin n) → (((BFList_curr.BFList[i]'(by simp[BFList_curr.hyp])).distance ≠ none) →
     (∃ p : (EdgePath n source i), (BFList_curr.BFList[i]'(by simp[BFList_curr.hyp])).distance = weight p)) := by
       induction counter
       case zero => 
         rw[BFList_after_relaxation,relax]
-        have h : ¬( i = source) →  ((initialized source).BFList[i]'(by sorry)).distance = none :=
-          fun h1 : ¬( i = source) =>
-            by sorry
-        sorry
-      case succ => sorry
+        exact fun (i :Fin n) => fun h : Ne ((initialized source).BFList[i]'(by sorry)).distance none
+          => by
+          simp[init_BFList_2]
+          have h1 : i = source := (init_BFList_2 source) h
+          rw[h1]
+          simp[initialized]
+          exact Exists.intro (EdgePath.point source) (by rw[weight])
+      case succ counter ih => 
+        exact fun (i : Fin n) => fun h : Ne (BFList_curr.BFList[i]'(by sorry)).distance none
+          => by
+            rw[relax_recur] at BFList_after_relaxation 
+            rw[BFList_after_relaxation]
+            sorry
+
+
+
+
 
 -- theorem relax_dist_atmost_shortest (source : Fin n) (i : Fin n) (g : Graph n) (BFListhyp : BFPath n) (counter : Nat)
 --   (BFList_is_from_BellmanFord : BFListhyp = relax g (initialized source) counter):
