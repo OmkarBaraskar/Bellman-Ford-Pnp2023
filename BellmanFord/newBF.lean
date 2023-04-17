@@ -10,85 +10,86 @@ structure Edge (n : Nat) where
 structure Graph (n : Nat) where
   edges : List (Edge n)
 
-inductive EdgePath (n : ℕ) : Fin n → Fin n → Type   where
-| point (v : Fin n) : EdgePath n v v
-| cons  (e : Edge n) (w : Fin n) (p : EdgePath n w e.source) : EdgePath n w e.target
+inductive EdgePath (g : Graph n) : Fin n → Fin n → Type   where
+| point (v : Fin n) : EdgePath g v v
+| cons  (e : Edge n) (w : Fin n) (hyp : e ∈ g.edges) (p : EdgePath g w e.source) : EdgePath g w e.target
 
-def weight (p : EdgePath n a b) : Int := 
+def weight (p : EdgePath g a b) : Int := 
   match p with
   |EdgePath.point _  => 0
-  |EdgePath.cons e _ p' => e.weight + weight p'
+  |EdgePath.cons e _ _ p' => e.weight + weight p'
 
-def length (p : EdgePath n a b) : Nat := 
+def length (p : EdgePath g a b) : Nat := 
   match p with
   |EdgePath.point _  => 0
-  |EdgePath.cons _ _ p' => 1 + length p'
+  |EdgePath.cons _ _ _ p' => 1 + length p'
 
-structure BFVertex (n : Nat) where
-  distance : Option Int
-  predecessor : Fin n
-  edgeweightofpred : Int := 0
+-- structure BFVertex (n : Nat) where
+--   distance : Option Int
+--   predecessor : Fin n
+--   edgeweightofpred : Int := 0
 
-structure BFVertexNew (n : Nat) (source : Fin n) where
-  index : Fin n
-  path : Option (EdgePath n source index)
+-- structure BFVertexNew (n : Nat) (source : Fin n) where
+--   index : Fin n
+--   path : Option (EdgePath n source index)
 
-structure BFListLengthHypNew (n : Nat) (source: Fin n) where
-  BFList : List (BFVertexNew n source)
-  hyp : BFList.length = n
+-- structure BFListLengthHypNew (n : Nat) (source: Fin n) where
+--   BFList : List (BFVertexNew n source)
+--   hyp : BFList.length = n
 
-structure BFListLengthHyp (n : Nat) where
-  BFList : List (BFVertex n)
-  hyp : BFList.length = n
+-- structure BFListLengthHyp (n : Nat) where
+--   BFList : List (BFVertex n)
+--   hyp : BFList.length = n
 
-def initializedNew (source : Fin n): BFListLengthHypNew n source:=
-  let init : List (BFVertexNew n source) := List.map (fun index ↦ {index := index, path := none} ) (List.finRange n)
-  let BF0 : List (BFVertexNew n source) := init.set source {index := source, path := EdgePath.point source}
-  have BF_len_eq_n : BF0.length = n := by simp[]
-  ⟨ BF0, BF_len_eq_n⟩ 
+-- def initializedNew (source : Fin n): BFListLengthHypNew n source:=
+--   let init : List (BFVertexNew n source) := List.map (fun index ↦ {index := index, path := none} ) (List.finRange n)
+--   let BF0 : List (BFVertexNew n source) := init.set source {index := source, path := EdgePath.point source}
+--   have BF_len_eq_n : BF0.length = n := by simp[]
+--   ⟨ BF0, BF_len_eq_n⟩ 
 
-def initialized (source : Fin n): BFListLengthHyp n:=
-  let init : List (BFVertex n) := List.map (fun _ ↦ {distance := none, predecessor := source} ) (List.finRange n)
-  let BF0 : List (BFVertex n) := init.set source {predecessor := source, distance := some 0}
-  have BF_len_eq_n : BF0.length = n := by simp[]
-  ⟨ BF0, BF_len_eq_n⟩ 
+-- def initialized (source : Fin n): BFListLengthHyp n:=
+--   let init : List (BFVertex n) := List.map (fun _ ↦ {distance := none, predecessor := source} ) (List.finRange n)
+--   let BF0 : List (BFVertex n) := init.set source {predecessor := source, distance := some 0}
+--   have BF_len_eq_n : BF0.length = n := by simp[]
+--   ⟨ BF0, BF_len_eq_n⟩ 
 
+def initPaths (source : Fin n) : (index: Fin n) → Option (EdgePath g source index) :=
+  let temp : (index: Fin n) → Option (EdgePath g source index) := fun index ↦ if h:index = source then (some (by rw[h]; exact EdgePath.point source)) else none
+  temp
 
 /- BF starts-/
 
-def relax_edge (BFList_and_hyp : BFListLengthHypNew n source) (edge : Edge n) : BFListLengthHypNew n source:=
-  let ⟨BFList, hyp⟩ := BFList_and_hyp
-  match (BFList[edge.source]'(by simp[hyp])).path with
-  | none => BFList_and_hyp
-  | some u => match (BFList[edge.target]'(by simp[hyp])).path  with
-              | none => 
-                        have indices_eq : (BFList[edge.source]'(by simp[hyp])).index = edge.source := by sorry
-                        -- let p : EdgePath n source edge.source := by sorry
-                        --   rw[<- indices_eq]
-                        --   exact u
-                        let newBFList : List (BFVertexNew n source) := BFList.set edge.target {index := edge.target, path:= EdgePath.cons edge source _}
-                        have hyp2 : newBFList.length = n := by simp[hyp]
-                        ⟨ newBFList, hyp2 ⟩ 
+def relax_edge (paths : (index : Fin n) → Option (EdgePath g source index)) (edge : Edge n) (hyp : edge ∈ g.edges): (index : Fin n) → Option (EdgePath g source index):=
+  match (paths edge.source) with
+  | none => paths
+  | some u => match (paths edge.target)  with
+              | none => fun index ↦ if h:index = edge.target then (some (by rw[h]; exact EdgePath.cons edge source hyp u)) else (paths index)
                         
               | some v => if weight v > weight u + edge.weight then
-                            have indices_eq : (BFList[edge.source]'(by simp[hyp])).index = edge.source := by sorry
-                            let p : EdgePath n source edge.source := by
-                              rw[<- indices_eq]
-                              exact u
-                            let newBFList : List (BFVertexNew n source) := BFList.set edge.target {index := edge.target, path:= EdgePath.cons edge source p}
-                            have hyp2 : newBFList.length = n := by simp[hyp]
-                            ⟨ newBFList, hyp2 ⟩ 
-                          else BFList_and_hyp
+                            fun index ↦ if h:index = edge.target then (some (by rw[h]; exact EdgePath.cons edge source hyp u)) else (paths index)
+                          else paths
 
-def relax (g : Graph n) (BFn : BFListLengthHypNew n source) (counter : Nat) : BFListLengthHypNew n source:= 
+def recurse_over_all_edges (remaining : List (Edge n)) (hyp : remaining ⊆ g.edges) (paths :(index : Fin n) → Option (EdgePath g source index)) : (index : Fin n) → Option (EdgePath g source index) :=
+  match h: remaining with
+  | [] => paths
+  | head::tail => have tail_is_sub : tail ⊆ g.edges := by 
+                    exact List.subset_of_cons_subset (hyp)
+                  
+                  let pathsnext : (index : Fin n) → Option (EdgePath g source index) := relax_edge paths head (by rw[List.cons_subset] at hyp; exact hyp.1)
+                  recurse_over_all_edges tail tail_is_sub pathsnext
+
+def relax (g : Graph n) (BFn : (index : Fin n) → Option (EdgePath g source index)) (counter : Nat) : (index : Fin n) → Option (EdgePath g source index):= 
   match counter with
   | 0 => BFn
-  | m + 1 => let BFnplus1 : BFListLengthHypNew n source := g.edges.foldl (fun bflist edge ↦ relax_edge bflist edge) BFn
-             relax g BFnplus1 m
-             
+  | m + 1 => let BFnplus1 : (index : Fin n) → Option (EdgePath g source index) := 
+              have hyp : g.edges ⊆ g.edges := by simp[]
+              recurse_over_all_edges g.edges hyp BFn
 
-def BellmanFord (g : Graph n) (source : Fin n) : BFListLengthHypNew n source :=
-  relax g (initializedNew source) (n - 1)
+             relax g BFnplus1 m
+
+
+def BellmanFord (g : Graph n) (source : Fin n) : (index : Fin n) → Option (EdgePath g source index) :=
+  relax g (initPaths source) (n - 1)
   
 
 /- BF Ends-/
