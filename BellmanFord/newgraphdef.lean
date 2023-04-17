@@ -131,7 +131,7 @@ theorem relax_gives_dist_eq_path (source : Fin n) (g : Graph n) (BFList_curr : B
       induction counter
       case zero => 
         rw[BFList_after_relaxation,relax]
-        exact fun (i :Fin n) => fun h : Ne ((initialized source).BFList[i]'(by sorry)).distance none
+        exact fun (i :Fin n) => fun h : Ne ((initialized source).BFList[i]'(by simp[(initialized source).hyp])).distance none
           => by
           simp[init_BFList_2]
           have h1 : i = source := (init_BFList_2 source) h
@@ -139,7 +139,7 @@ theorem relax_gives_dist_eq_path (source : Fin n) (g : Graph n) (BFList_curr : B
           simp[initialized]
           exact Exists.intro (EdgePath.point source) (by rw[weight])
       case succ counter ih => 
-        exact fun (i : Fin n) => fun h : Ne (BFList_curr.BFList[i]'(by sorry)).distance none
+        exact fun (i : Fin n) => fun h : Ne (BFList_curr.BFList[i]'(by simp[BFList_curr.hyp])).distance none
           => by
             rw[relax_recur] at BFList_after_relaxation 
             rw[BFList_after_relaxation]
