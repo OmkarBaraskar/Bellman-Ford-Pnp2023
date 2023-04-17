@@ -144,7 +144,23 @@ def pathViaBellmanFord (g : Graph n) (source : Fin n) (target : Fin n) : EdgePat
 
 theorem init_BFList_1 (source : Fin n) : i = source →   Ne ((initialized source).BFList[i]'(by sorry)).distance  none := sorry
 
-theorem init_BFList_2 (source : Fin n) : Ne ((initialized source).BFList[i]'(by sorry)).distance  none → i = source  := sorry
+theorem init_BFList_2 (source : Fin n) : Ne ((initialized source).BFList[i]'(by simp[(initialized source).hyp])).distance  none → i = source  := by
+  intro j
+  have h : i ≠ source → ((initialized source).BFList[i]'(by simp[(initialized source).hyp])).distance.isNone := by
+    exact initialized_non_source_dist_none i
+  have k : Ne ((initialized source).BFList[i]'(by simp[(initialized source).hyp])).distance  none → ¬ ((initialized source).BFList[i]'(by simp[(initialized source).hyp])).distance.isNone := by
+    rw[ne_eq]
+    rw[not_imp_not]
+    apply Option.eq_none_of_isNone
+  have k1 : ¬ (((initialized source).BFList[i]'(by simp[(initialized source).hyp])).distance.isNone) → i = source := by
+    have aux : (i = source) = ¬ (i ≠ source ) := by simp[]
+    rw[aux]
+    rw[not_imp_not]
+    apply h
+  rw[k1]
+  apply k
+  apply j
+
 
 theorem relax_gives_dist_eq_path (source : Fin n) (g : Graph n) (BFList_curr : BFPath n) (counter : Nat)
   (BFList_after_relaxation : BFList_curr = relax g (initialized source) counter):
