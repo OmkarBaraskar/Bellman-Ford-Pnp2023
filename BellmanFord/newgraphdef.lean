@@ -25,6 +25,30 @@ def initialized (source : Fin n): BFPath n:=
   have BF_len_eq_n : BF0.length = n := by simp[]
   ⟨ BF0, BF_len_eq_n⟩ 
 
+theorem initialized_non_source_dist_none (i : Fin n) : i ≠ source → ((initialized source).BFList[i]'(by simp[(initialized source).hyp])).distance.isNone := by
+  intro h
+  let base : BFVertex n := {distance := none, predecessor := source}
+  have trueing (b : BFVertex n) (b_eq : b = base) : b.distance.isNone := by rw[b_eq]; simp[]
+  apply trueing
+  let init : List (BFVertex n) := List.map (fun _ ↦ base ) (List.finRange n)
+  let BF0 : List (BFVertex n) := init.set source {predecessor := source, distance := some 0}
+  have BF_len_eq_n : BF0.length = n := by simp[]
+  let inited : BFPath n := ⟨ BF0, BF_len_eq_n⟩ 
+  have h1 : (initialized source) = inited := by
+    rw[initialized]
+  rw[h1]
+  have h2: inited.BFList = BF0 := by simp[]
+  have h3: inited.BFList[i] = BF0[i] := by simp[h2]
+  rw[h3]
+  have h4: i < BF0.length := by simp[BF_len_eq_n]
+  have h5: BF0 = init.set source {predecessor := source, distance := some 0} := by simp[]
+  have h6 : BF0[i] = init[i] := by
+    apply List.get_set_of_ne
+    
+
+  #check List.get_set_of_ne
+
+
 inductive EdgePath (n : ℕ) : Fin n → Fin n → Type   where
 | point (v : Fin n) : EdgePath n v v
 | cons  (e : Edge n) (w : Fin n) (p : EdgePath n w e.source) : EdgePath n w e.target
@@ -96,7 +120,7 @@ theorem relax_gives_dist_eq_path (source : Fin n) (i : Fin n) (g : Graph n) (BFL
       induction counter
       case zero => 
         rw[BFList_after_relaxation,relax]
-        have h : ¬( i = source) →  ((initialized source).BFList[i]'(by sorry)).distance = none :=
+        have h : ¬( i = source) →  ((initialized source).BFList[i]'(by simp[(initialized source).hyp])).distance = none :=
           fun h1 : ¬( i = source) =>
             by sorry
         sorry
