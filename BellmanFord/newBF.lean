@@ -96,7 +96,17 @@ def BellmanFord (g : Graph n) (source : Fin n) : (index : Fin n) → Option (Edg
 
 /- Proof -/
 
-#check Option
+#check Option.get
+
+theorem relax_edge_some (edge : Edge n) (hyp : edge ∈ g.edges) (paths : (index : Fin n) → Option (EdgePath g source index))
+  (h1 : (paths edge.source).isSome)
+  : ((relax_edge paths edge hyp) edge.target).isSome:= by sorry
+
+theorem relax_edge_leq (edge : Edge n) (hyp : edge ∈ g.edges) (paths : (index : Fin n) → Option (EdgePath g source index))
+  (h1 : (paths edge.source).isSome) (h2 : (paths edge.target).isSome)
+  : (weight (((relax_edge paths edge hyp) edge.target).get (by exact relax_edge_some edge hyp paths h1)) ≤ (weight ((paths edge.target).get h2)) ) := by 
+      sorry
+
 
 theorem relax_gives_dist_eq_path (source : Fin n) (i : Fin n) (g : Graph n) (BFListhyp : BFListLengthHyp n) (counter : Nat)
   (BFList_is_after_counter_relaxes : BFListhyp = relax g (initialized source) counter):
