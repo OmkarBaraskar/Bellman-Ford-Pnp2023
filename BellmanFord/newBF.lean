@@ -122,17 +122,39 @@ theorem relax_edge_leq (edge : Edge n) (hyp : edge ∈ g.edges) (paths : (index 
                 contradiction
       | some u => let v := (paths edge.target).get h2
                   if cond : weight v > weight u + edge.weight then
-                    sorry
-                  else
-                    have lm : (relax_edge paths edge hyp edge.target) = paths edge.target := by
+                    have lm : (relax_edge paths edge hyp edge.target) = some (EdgePath.cons edge source hyp u) := by
                       rw[relax_edge]
-                      simp[h, cond]
+                      simp[h]
                       match j: paths edge.target with
                         | none => rw[j] at h2; contradiction
                         | some v1 => have lm2 : v1 = v := by simp[j]
                                      simp[]
-                                     sorry
-                    sorry
+                                     rw[lm2]
+                                     simp[cond]
+                    have lm2 : ((relax_edge paths edge hyp) edge.target).get (by exact relax_edge_some edge hyp paths h1) = EdgePath.cons edge source hyp u := by simp[lm]
+                    simp[lm2]
+                    simp[weight]
+                    have lm3: weight v ≥ edge.weight + weight u := by
+                      apply Int.le_of_lt
+                      have obvious : weight u + edge.weight = edge.weight + weight u := by
+                        apply Int.add_comm
+                      rw[<- obvious]
+                      exact cond
+                    simp[] at lm3
+                    exact lm3
+
+                  else
+                    have lm : (relax_edge paths edge hyp edge.target) = paths edge.target := by
+                      rw[relax_edge]
+                      simp[h]
+                      match j: paths edge.target with
+                        | none => rw[j] at h2; contradiction
+                        | some v1 => have lm2 : v1 = v := by simp[j]
+                                     simp[]
+                                     rw[lm2]
+                                     simp[cond]
+                    have lm2 : ((relax_edge paths edge hyp) edge.target).get (by exact relax_edge_some edge hyp paths h1) = ((paths edge.target).get h2) := by simp[lm]
+                    simp[lm2]
                         
 
 
