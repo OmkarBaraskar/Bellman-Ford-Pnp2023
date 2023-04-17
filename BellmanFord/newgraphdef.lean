@@ -40,13 +40,17 @@ theorem initialized_non_source_dist_none (i : Fin n) : i ≠ source → ((initia
   have h2: inited.BFList = BF0 := by simp[]
   have h3: inited.BFList[i] = BF0[i] := by simp[h2]
   rw[h3]
-  have h4: i < BF0.length := by simp[BF_len_eq_n]
-  have h5: BF0 = init.set source {predecessor := source, distance := some 0} := by simp[]
   have h6 : BF0[i] = init[i] := by
     apply List.get_set_of_ne
-    
+    have k : i.val ≠ source.val := by 
+      rw[<- Fin.ne_iff_vne]
+      exact h
+    rw[ne_comm]
+    assumption
+  rw[h6]
+  simp[] 
 
-  #check List.get_set_of_ne
+
 
 
 inductive EdgePath (n : ℕ) : Fin n → Fin n → Type   where
