@@ -206,32 +206,14 @@ theorem relax_edge_leq (edge : Edge n) (hyp : edge ∈ g.edges) (paths : (index 
                     simp[lm2]
 
 
-
-
-
--- theorem relax_gives_dist_eq_path (source : Fin n) (i : Fin n) (g : Graph n) (BFListhyp : BFListLengthHyp n) (counter : Nat)
---   (BFList_is_after_counter_relaxes : BFListhyp = relax g (initialized source) counter):
---     (((BFListhyp.BFList[i]'(by simp[BFListhyp.hyp])).distance ≠ none) →
---     (∃ p : (EdgePath n source i), (BFListhyp.BFList[i]'(by simp[BFListhyp.hyp])).distance = weight p)) := by
---       sorry
-    
-
--- -- theorem relax_dist_atmost_shortest (source : Fin n) (i : Fin n) (g : Graph n) (BFListhyp : BFListLengthHyp n) (counter : Nat)
--- --   (BFList_is_from_BellmanFord : BFListhyp = relax g (initialized source) counter):
-
--- theorem BellmanFord_gives_shortest_path (source : Fin n) (i : Fin n) (g : Graph n) (BFListhyp : BFListLengthHyp n)
---   (BFList_is_from_BellmanFord : BFListhyp = BellmanFord g source):
---     ∀ p : EdgePath n source i, weight p ≥ weight (pathViaBellmanFord g source i) := by
---       sorry
-
-theorem path_exists_then_isSome (g : Graph n) (source i : Fin n) (counter : Nat): (p : EdgePath g source i) → 
+theorem path_exists_then_isSome (g : Graph n) (source i : Fin n) (counter : Nat): (p : EdgePath g source i) → (h : length p ≤ counter) → 
   ((relax g (initPaths g source) counter) i).isSome := sorry
 
 theorem relax_isSome (g : Graph n) (source i : Fin n) (h : ((relax g (initPaths g source) counter) i).isSome) :
   ((relax g (initPaths g source) (counter+1)) i).isSome := sorry
 
 theorem relax_leq (g : Graph n) (source i : Fin n) (h : ((relax g (initPaths g source) counter) i).isSome) :
-  weight (((relax g (initPaths g source) counter) i).get h) ≥ weight (((relax g (initPaths g source) (counter+1)) i).get (relax_isSome g i h))
+  weight (((relax g (initPaths g source) counter) i).get h) ≥ weight (((relax g (initPaths g source) (counter+1)) i).get (relax_isSome g source i h))
   := sorry 
 
 theorem relax_leq_edge (g : Graph n) (e: Edge n) (hyp : e ∈ g.edges) 
@@ -250,7 +232,14 @@ theorem weight_source_isSome (g : Graph n) (source : Fin n) (counter: Nat):
      
 
 theorem weight_source_is_zero (g : Graph n) (source : Fin n) (counter: Nat) : 
-   weight ( ((relax g (initPaths g source) counter) source).get (weight_source_isSome g source counter) ) = 0 := sorry
+   weight ( ((relax g (initPaths g source) counter) source).get (weight_source_isSome g source counter) ) = 0 := by
+   induction counter
+   case zero =>
+    simp[relax]
+    simp[initPaths]
+    simp[weight]
+   case succ counter ih =>
+    sorry
   
 
 theorem BellmanFordAux (source : Fin n) (counter : Nat) (source : Fin n):
@@ -281,7 +270,7 @@ theorem BellmanFordAux (source : Fin n) (counter : Nat) (source : Fin n):
         have h2 : length p' ≤ counter := by
           rw[length] at h1
           sorry
-        let path_exists_hyp := (path_exists_then_isSome g source e.source counter p')
+        let path_exists_hyp := (path_exists_then_isSome g source e.source counter p') h2
         let path_exists_hyp_next := (relax_isSome g source e.source path_exists_hyp)
         have h3 : 
           weight p' ≥ weight (((relax g (initPaths g source) (counter)) e.source).get path_exists_hyp) := 
