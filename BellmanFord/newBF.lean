@@ -273,7 +273,10 @@ theorem Reduced_Path_theorem (source : Fin n) : (i : Fin n) → (p : EdgePath g 
 theorem BellamnFordPf (g: Graph n) (source : Fin n) : 
   (i : Fin n) → 
   (p : EdgePath g source i) →  
-  (weight p ≥ weight (((BellmanFord g source) i).get (path_exists_then_isSome g i (n-1) )  
+  (weight p ≥ weight (((BellmanFord g source) i).get (by sorry))) := 
+  by
+    intro i p
+    let p' : EdgePath g source i   := (Reduced_Path_theorem source i p).1
 
 
             
