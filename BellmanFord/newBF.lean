@@ -198,8 +198,28 @@ theorem relax_edge_leq (edge : Edge n) (hyp : edge ∈ g.edges) (paths : (index 
                     simp[lm2]
 
 /-If there exists a path of length ≤ counter then after counter many relaxations then it will assigned some distance which is not none-/
-theorem path_exists_then_isSome (g : Graph n) (source i : Fin n) (counter : Nat): (p : EdgePath g source i) → (h : length p ≤ counter) → 
-  ((relax g (initPaths g source) counter) i).isSome := sorry
+theorem path_exists_then_isSome (g : Graph n) (source i : Fin n) (counter : Nat): (p : EdgePath g source i) → (h : length p ≤ counter) →
+  ((relax g (initPaths g source) counter) i).isSome := by
+    intro p h
+    induction counter
+    case zero => have h1 : length p ≥ 0 := by apply length_geq_zero
+                 simp[] at h
+                 have h2 : i = source := by
+                  match p with
+                  | EdgePath.point c => simp[]
+                  | EdgePath.cons e _ _ p' => simp[length] at h
+                 have h3 : (relax g (initPaths g source) Nat.zero) = initPaths g source := by simp[relax]
+                 rw[h3]
+                 rw[h2]
+                 simp[initPaths]
+    case succ counter ih => 
+                            rw[relax]
+                            sorry
+
+
+
+
+
 
 /-- If there is a path at ith index in "List of Paths", then there will be one after one execution of relax-/
 theorem relax_isSome (g : Graph n) (source i : Fin n) (h : ((relax g (initPaths g source) counter) i).isSome) :
