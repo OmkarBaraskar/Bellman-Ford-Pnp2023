@@ -27,16 +27,6 @@ def get_path_edges (n : Nat) (g : Graph n) (a : Fin n) (b : Fin n) (path : EdgeP
 
 instance : ToString (EdgePath g a b) where toString path := toString (get_path_edges _ g a b path)
 
-def graph1 : Graph 4 :=
-  {edges := [⟨ 0, 2, 3⟩ , ⟨1, 3, 5⟩ , ⟨ 2, 3, 4⟩ , ⟨ 3, 1, -2⟩  ]}
-
-#eval graph1
-
-def path1 : EdgePath graph1 0 3 :=
-  EdgePath.cons ⟨ 2, 3, 4⟩ 0 (by rw[graph1]; simp[]) (EdgePath.cons ⟨ 0, 2, 3⟩ 0 (by rw[graph1]; simp[]) (EdgePath.point 0))
-
-#eval path1
-
 def weight (p : EdgePath g a b) : Int := 
   match p with
   |EdgePath.point _  => 0
@@ -59,35 +49,6 @@ theorem length_geq_zero (p : EdgePath g a b) : length p ≥ 0 := by
   case cons e _ _ p' _ => simp[]
  
  axiom non_negative_cycle (n : Nat) (g : Graph n) (i : Fin n) : ∀ p : EdgePath g i i, weight p ≥ 0 
-
--- structure BFVertex (n : Nat) where
---   distance : Option Int
---   predecessor : Fin n
---   edgeweightofpred : Int := 0
-
--- structure BFVertexNew (n : Nat) (source : Fin n) where
---   index : Fin n
---   path : Option (EdgePath n source index)
-
--- structure BFListLengthHypNew (n : Nat) (source: Fin n) where
---   BFList : List (BFVertexNew n source)
---   hyp : BFList.length = n
-
--- structure BFListLengthHyp (n : Nat) where
---   BFList : List (BFVertex n)
---   hyp : BFList.length = n
-
--- def initializedNew (source : Fin n): BFListLengthHypNew n source:=
---   let init : List (BFVertexNew n source) := List.map (fun index ↦ {index := index, path := none} ) (List.finRange n)
---   let BF0 : List (BFVertexNew n source) := init.set source {index := source, path := EdgePath.point source}
---   have BF_len_eq_n : BF0.length = n := by simp[]
---   ⟨ BF0, BF_len_eq_n⟩ 
-
--- def initialized (source : Fin n): BFListLengthHyp n:=
---   let init : List (BFVertex n) := List.map (fun _ ↦ {distance := none, predecessor := source} ) (List.finRange n)
---   let BF0 : List (BFVertex n) := init.set source {predecessor := source, distance := some 0}
---   have BF_len_eq_n : BF0.length = n := by simp[]
---   ⟨ BF0, BF_len_eq_n⟩ 
 
 def initPaths (g : Graph n) (source : Fin n) : (index: Fin n) → Option (EdgePath g source index) :=
   let temp : (index: Fin n) → Option (EdgePath g source index) := fun index ↦ if h:index = source then (some (by rw[h]; exact EdgePath.point source)) else none
@@ -123,7 +84,6 @@ def relax (g : Graph n) (BFn : (index : Fin n) → Option (EdgePath g source ind
   | m + 1 => let BFnplus1 : (index : Fin n) → Option (EdgePath g source index) := 
               have hyp : g.edges ⊆ g.edges := by simp[]
               recurse_over_all_edges g.edges hyp BFn
-
              relax g BFnplus1 m
 
 
@@ -132,11 +92,21 @@ def BellmanFord (g : Graph n) (source : Fin n) : (index : Fin n) → Option (Edg
 
 /- BF Ends-/
 
+/-Examples-/
+
+def graph1 : Graph 4 :=
+  {edges := [⟨ 0, 2, 3⟩ , ⟨1, 3, 5⟩ , ⟨ 2, 3, 4⟩ , ⟨ 3, 1, -2⟩  ]}
+
+#eval graph1
+
+def path1 : EdgePath graph1 0 3 :=
+  EdgePath.cons ⟨ 2, 3, 4⟩ 0 (by rw[graph1]; simp[]) (EdgePath.cons ⟨ 0, 2, 3⟩ 0 (by rw[graph1]; simp[]) (EdgePath.point 0))
+
+#eval path1
+
 #eval (BellmanFord graph1 2 3)
 
 /- Proof -/
-
-#check Option.get
  
 
 theorem init_path_some_source (g : Graph n) (source : Fin n) (i : Fin n) : ((initPaths g source) i).isSome → i = source := by
@@ -242,7 +212,7 @@ theorem weight_source_is_zero (g : Graph n) (source : Fin n) (counter: Nat) :
     sorry
   
 
-theorem BellmanFordAux (source : Fin n) (counter : Nat) (source : Fin n):
+theorem BellmanFordAux (source : Fin n) (counter : Nat):
   (i: Fin n) → 
   (h: ((relax g (initPaths g source) (counter)) i).isSome) →  
   (p : (EdgePath g source i)) →  
@@ -296,6 +266,14 @@ theorem BellmanFordAux (source : Fin n) (counter : Nat) (source : Fin n):
           apply Int.add_comm e.weight (weight p')
         rw[h6]
         simp[h5]
+
+theorem Reduced_Path_theorem (source : Fin n) : (i : Fin n) → (p : EdgePath g source i) → (∃ p' : EdgePath g souce i, (length p' ≤ n -1) ∧ (weight p ≥ weight p')) 
+  := by sorry
+
+theorem BellamnFordPf (g: Graph n) (source : Fin n) : 
+  (i : Fin n) → 
+  (p : EdgePath g source i) →  
+  (weight p ≥ weight (((BellmanFord g source) i).get (path_exists_then_isSome g i (n-1) )  
 
 
             
