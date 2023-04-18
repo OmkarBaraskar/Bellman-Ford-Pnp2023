@@ -241,6 +241,7 @@ theorem weight_source_is_zero (g : Graph n) (source : Fin n) (counter: Nat) :
    case succ counter ih =>
     sorry
   
+#check Nat.succ_le_succ_iff
 
 theorem BellmanFordAux (source : Fin n) (counter : Nat):
   (i: Fin n) → 
@@ -269,7 +270,10 @@ theorem BellmanFordAux (source : Fin n) (counter : Nat):
     case cons e source hyp p' ih1 =>
         have h2 : length p' ≤ counter := by
           rw[length] at h1
-          sorry
+          apply Nat.succ_le_succ_iff.mp
+          rw[Nat.succ_eq_add_one]
+          have obvious : length p' + 1 = 1 + length p' := by simp[Nat.add_comm]
+          simp[h1, obvious]
         let path_exists_hyp := (path_exists_then_isSome g source e.source counter p') h2
         let path_exists_hyp_next := (relax_isSome g source e.source path_exists_hyp)
         have h3 : 
@@ -298,16 +302,15 @@ theorem BellmanFordAux (source : Fin n) (counter : Nat):
         simp[h5]
 
 /-- For any index i and path p from source to i, there exists a path with atmost n-1 edges whose weight ≤ weight p-/
-theorem Reduced_Path_theorem (source : Fin n) : (i : Fin n) → (p : EdgePath g source i) → (∃ p' : EdgePath g souce i, (length p' ≤ n -1) ∧ (weight p ≥ weight p')) 
+theorem Reduced_Path_theorem (g : Graph n) (source : Fin n) : (i : Fin n) → (p : EdgePath g source i) → (∃ p' : EdgePath g souce i, (length p' ≤ n -1) ∧ (weight p ≥ weight p')) 
   := by sorry
 
 /-It states that if there exists a path p from source to i then BellamnFord will assign a distance to i-/
-theorem path_exists_then_isSome_BellmanFord (g : Graph n) : (i : Fin n) →  (p : EdgePath g source i) →  
+theorem path_exists_then_isSome_BellmanFord (g : Graph n) (source : Fin n) : (i : Fin n) →  (p : EdgePath g source i) →  
   ((BellmanFord g source) i).isSome := by
   intro i p
-  match (Reduced_Path_theorem source i p) with
-  | ⟨ p', hp'⟩ => apply (path_exists_then_isSome g source i (n-1) p' hp'.left)
-
+  match (Reduced_Path_theorem g source i) with
+  | ⟨ p', hp' ⟩ =>  apply (path_exists_then_isSome g source i (n-1) p' hp'.left)
 
 /-Correctness Of BellmanFord-/
 theorem BellamnFordPf (g: Graph n) (source : Fin n) : 
@@ -316,7 +319,7 @@ theorem BellamnFordPf (g: Graph n) (source : Fin n) :
   (weight p ≥ weight (((BellmanFord g source) i).get (path_exists_then_isSome_BellmanFord g i p))) := 
   by 
     intro i p
-    match (Reduced_Path_theorem source i p) with
+    match (Reduced_Path_theorem g source i p) with
     | ⟨ p', hp'⟩ => 
       have h : weight p' ≥ weight (((BellmanFord g source) i).get (path_exists_then_isSome_BellmanFord g i p)) :=
         by
@@ -324,14 +327,3 @@ theorem BellamnFordPf (g: Graph n) (source : Fin n) :
       calc
       weight p ≥ weight p' := (hp'.right)
       _ ≥ weight (((BellmanFord g source) i).get (path_exists_then_isSome_BellmanFord g i p)) := (h)        
-
-
-
-
-            
-
-
-
-    
-
-  
