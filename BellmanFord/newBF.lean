@@ -197,7 +197,7 @@ theorem relax_edge_leq (edge : Edge n) (hyp : edge ∈ g.edges) (paths : (index 
                     have lm2 : ((relax_edge paths edge hyp) edge.target).get (by exact relax_edge_some edge hyp paths h1) = ((paths edge.target).get h2) := by simp[lm]
                     simp[lm2]
 
-
+/-If there exists a path of length ≤ counter then after counter many relaxations then it will assigned some distance which is not none-/
 theorem path_exists_then_isSome (g : Graph n) (source i : Fin n) (counter : Nat): (p : EdgePath g source i) → (h : length p ≤ counter) → 
   ((relax g (initPaths g source) counter) i).isSome := sorry
 
@@ -211,11 +211,16 @@ theorem relax_leq (g : Graph n) (source i : Fin n) (h : ((relax g (initPaths g s
   weight (((relax g (initPaths g source) counter) i).get h) ≥ weight (((relax g (initPaths g source) (counter+1)) i).get (relax_isSome g source i h))
   := sorry 
 
+
+/-It states that for given edge e in the graph say both e.source and e.target are assigned distance by BellmanFord algorithm after counter many
+relaxations then it states that distance assigned by BellmanFord to e.source + e.weight ≥ distance assigned to BellmanFord to e.target -/
 theorem relax_leq_edge (g : Graph n) (e: Edge n) (hyp : e ∈ g.edges) 
   (h1 : ((relax g (initPaths g source) counter) e.source).isSome) (h2 : ((relax g (initPaths g source) counter) e.target).isSome) : 
   weight (((relax g (initPaths g source) counter) e.source).get h1) + e.weight ≥ weight (((relax g (initPaths g source) counter) e.target).get h2) 
   := sorry 
 
+
+/-The following theorems below state that distance assigned to source is 0 for any (counter : Nat)-/
 theorem weight_source_isSome (g : Graph n) (source : Fin n) (counter: Nat): 
   ((relax g (initPaths g source) counter) source).isSome:= by 
   induction counter
@@ -292,15 +297,27 @@ theorem BellmanFordAux (source : Fin n) (counter : Nat):
         rw[h6]
         simp[h5]
 
+/-- For any index i and path p from source to i, there exists a path with atmost n-1 edges whose weight ≤ weight p-/
 theorem Reduced_Path_theorem (source : Fin n) : (i : Fin n) → (p : EdgePath g source i) → (∃ p' : EdgePath g souce i, (length p' ≤ n -1) ∧ (weight p ≥ weight p')) 
   := by sorry
 
+/-Correctness Of BellmanFord-/
 theorem BellamnFordPf (g: Graph n) (source : Fin n) : 
   (i : Fin n) → 
   (p : EdgePath g source i) →  
-  (weight p ≥ weight (((BellmanFord g source) i).get (by sorry))) := 
-  by
-    intro i 
+  have h :(weight p ≥ weight (((BellmanFord g source) i).get (path_exists_then_isSome_BellmanFord g i p))) := 
+  by 
+    intro i p
+    match (Reduced_Path_theorem source i p) with
+    | ⟨ p', hp'⟩ => 
+      have h : weight p' ≥ weight (((BellmanFord g source) i).get (path_exists_then_isSome_BellmanFord g i p)) :=
+        by
+          apply BellmanFordAux source (n-1) i (path_exists_then_isSome_BellmanFord g i p) p' hp'.left
+      calc
+      weight p ≥ weight p' := (hp'.right)
+      _ ≥ weight (((BellmanFord g source) i).get (path_exists_then_isSome_BellmanFord g i p)) := h
+      sorry
+    
 
 
 
