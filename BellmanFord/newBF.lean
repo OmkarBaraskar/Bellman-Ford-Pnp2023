@@ -16,10 +16,14 @@ structure Graph (n : Nat) where
 
 instance : ToString (Graph n) where toString graph := toString graph.edges
 
+
+/-- EdgePath definition, done inductively. When adding an edge to the path, requires a hypothesis that that edge is
+an edge of graph g.-/
 inductive EdgePath (g : Graph n) : Fin n → Fin n → Type   where
 | point (v : Fin n) : EdgePath g v v
 | cons  (e : Edge n) (w : Fin n) (hyp : e ∈ g.edges) (p : EdgePath g w e.source) : EdgePath g w e.target
 
+/-- Auxilliary function for representing EdgePath. Returns a list of edges in an EdgePath-/
 def get_path_edges (n : Nat) (g : Graph n) (a : Fin n) (b : Fin n) (path : EdgePath g a b) : List (Edge n) :=
   match path with
   | EdgePath.point c => [{source := c, target := c, weight := 0}]
@@ -27,16 +31,19 @@ def get_path_edges (n : Nat) (g : Graph n) (a : Fin n) (b : Fin n) (path : EdgeP
 
 instance : ToString (EdgePath g a b) where toString path := toString (get_path_edges _ g a b path)
 
+/-- Weight of path. This is the sum of edge weights of the path.-/
 def weight (p : EdgePath g a b) : Int := 
   match p with
   |EdgePath.point _  => 0
   |EdgePath.cons e _ _ p' => e.weight + weight p'
 
+/-- Length of path. Number of edges in the path-/
 def length (p : EdgePath g a b) : Nat := 
   match p with
   |EdgePath.point _  => 0
   |EdgePath.cons _ _ _ p' => 1 + length p'
 
+/--For any path, length of p = 0 implies weight of p = 0-/
 theorem len_zero_imp_weight_zero (p : EdgePath g a b) : length p = 0 → weight p = 0 := by
   intro hyp
   match p with
@@ -47,9 +54,14 @@ theorem length_geq_zero (p : EdgePath g a b) : length p ≥ 0 := by
   induction p
   case point => simp[]
   case cons e _ _ p' _ => simp[]
- 
- axiom non_negative_cycle (n : Nat) (g : Graph n) (i : Fin n) : ∀ p : EdgePath g i i, weight p ≥ 0 
 
+/-- Assuming no negative cycles-/
+axiom non_negative_cycle (n : Nat) (g : Graph n) (i : Fin n) : ∀ p : EdgePath g i i, weight p ≥ 0 
+
+
+/-- Initialized version of the "List of paths" which BellmanFord is going to return. The type is a function from
+Fin n to Option (EdgePath g source index). Sets the function to none whenever index ≠ source, and an empty
+path at the source when index = source.-/
 def initPaths (g : Graph n) (source : Fin n) : (index: Fin n) → Option (EdgePath g source index) :=
   let temp : (index: Fin n) → Option (EdgePath g source index) := fun index ↦ if h:index = source then (some (by rw[h]; exact EdgePath.point source)) else none
   temp
@@ -86,7 +98,7 @@ def relax (g : Graph n) (BFn : (index : Fin n) → Option (EdgePath g source ind
               recurse_over_all_edges g.edges hyp BFn
              relax g BFnplus1 m
 
-
+/-- BellmanFord just calls relax with counter-/
 def BellmanFord (g : Graph n) (source : Fin n) : (index : Fin n) → Option (EdgePath g source index) :=
   relax g (initPaths g source) (n - 1)
 
