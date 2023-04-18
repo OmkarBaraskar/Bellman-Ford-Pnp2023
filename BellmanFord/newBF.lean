@@ -267,16 +267,30 @@ theorem BellmanFordAux (source : Fin n) (counter : Nat):
         rw[h6]
         simp[h5]
 
-theorem Reduced_Path_theorem (source : Fin n) : (i : Fin n) → (p : EdgePath g source i) → (∃ p' : EdgePath g souce i, (length p' ≤ n -1) ∧ (weight p ≥ weight p')) 
+theorem Reduced_Path_theorem (source : Fin n) : (i : Fin n) → (p : EdgePath g source i) → (∃ p' : EdgePath g source i, (length p' ≤ n -1) ∧ (weight p ≥ weight p')) 
   := by sorry
+
+theorem path_exists_then_isSome_BellmanFord (g : Graph n) : (i : Fin n) →  (p : EdgePath g source i) →  
+  ((BellmanFord g source) i).isSome := by
+  intro i p
+  match (Reduced_Path_theorem source i p) with
+  | ⟨ p', hp'⟩ => apply (path_exists_then_isSome g source i (n-1) p' hp'.left)
+
 
 theorem BellamnFordPf (g: Graph n) (source : Fin n) : 
   (i : Fin n) → 
   (p : EdgePath g source i) →  
-  (weight p ≥ weight (((BellmanFord g source) i).get (by sorry))) := 
-  by
+  (weight p ≥ weight (((BellmanFord g source) i).get (path_exists_then_isSome_BellmanFord g i p))) := 
+  by 
     intro i p
-    let p' : EdgePath g source i   := (Reduced_Path_theorem source i p).1
+    match (Reduced_Path_theorem source i p) with
+    | ⟨ p', hp'⟩ => 
+      have h : weight p' ≥ weight (((BellmanFord g source) i).get (path_exists_then_isSome_BellmanFord g i p)) :=
+        by
+          apply BellmanFordAux source (n-1) i (path_exists_then_isSome_BellmanFord g i p) p' hp'.left
+      calc
+      weight p ≥ weight p' := (hp'.right)
+      _ ≥ weight (((BellmanFord g source) i).get (path_exists_then_isSome_BellmanFord g i p)) := h        
 
 
             
