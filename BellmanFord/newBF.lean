@@ -58,6 +58,7 @@ theorem length_geq_zero (p : EdgePath g a b) : length p ≥ 0 := by
   case point => simp[]
   case cons e _ _ p' _ => simp[]
  
+ axiom non_negative_cycle (n : Nat) (g : Graph n) (i : Fin n) : ∀ p : EdgePath g i i, weight p ≥ 0 
 
 -- structure BFVertex (n : Nat) where
 --   distance : Option Int
@@ -92,6 +93,9 @@ def initPaths (g : Graph n) (source : Fin n) : (index: Fin n) → Option (EdgePa
   let temp : (index: Fin n) → Option (EdgePath g source index) := fun index ↦ if h:index = source then (some (by rw[h]; exact EdgePath.point source)) else none
   temp
 
+theorem weight_initPaths (g : Graph n) (source : Fin n) : weight ((initPaths g source source).get (by simp[initPaths])) = 0 := 
+  by simp[initPaths,weight]
+
 /- BF starts-/
 
 def relax_edge (paths : (index : Fin n) → Option (EdgePath g source index)) (edge : Edge n) (hyp : edge ∈ g.edges): (index : Fin n) → Option (EdgePath g source index):=
@@ -125,7 +129,6 @@ def relax (g : Graph n) (BFn : (index : Fin n) → Option (EdgePath g source ind
 
 def BellmanFord (g : Graph n) (source : Fin n) : (index : Fin n) → Option (EdgePath g source index) :=
   relax g (initPaths g source) (n - 1)
-  
 
 /- BF Ends-/
 
@@ -134,6 +137,7 @@ def BellmanFord (g : Graph n) (source : Fin n) : (index : Fin n) → Option (Edg
 /- Proof -/
 
 #check Option.get
+ 
 
 theorem init_path_some_source (g : Graph n) (source : Fin n) (i : Fin n) : ((initPaths g source) i).isSome → i = source := by
   have lm : ¬ i = source → ¬ (initPaths g source i).isSome := by
@@ -200,7 +204,9 @@ theorem relax_edge_leq (edge : Edge n) (hyp : edge ∈ g.edges) (paths : (index 
                                      simp[cond]
                     have lm2 : ((relax_edge paths edge hyp) edge.target).get (by exact relax_edge_some edge hyp paths h1) = ((paths edge.target).get h2) := by simp[lm]
                     simp[lm2]
-                        
+
+
+
 
 
 -- theorem relax_gives_dist_eq_path (source : Fin n) (i : Fin n) (g : Graph n) (BFListhyp : BFListLengthHyp n) (counter : Nat)
@@ -218,18 +224,95 @@ theorem relax_edge_leq (edge : Edge n) (hyp : edge ∈ g.edges) (paths : (index 
 --     ∀ p : EdgePath n source i, weight p ≥ weight (pathViaBellmanFord g source i) := by
 --       sorry
 
-theorem BellmanFordAux (source : Fin n) (counter : Nat) (source i: Fin n):
-    (h: ((relax g (initPaths g source) (counter)) i).isSome) → 
-  (p : (EdgePath g source i)) →  (h1 : (length p ≤ counter)) → (weight p ≥ weight (((relax g (initPaths g source) (counter)) i).get h)) := by
+theorem path_exists_then_isSome (g : Graph n) (source i : Fin n) (counter : Nat): (p : EdgePath g source i) → 
+  ((relax g (initPaths g source) counter) i).isSome := sorry
+
+theorem relax_isSome (g : Graph n) (source i : Fin n) (h : ((relax g (initPaths g source) counter) i).isSome) :
+  ((relax g (initPaths g source) (counter+1)) i).isSome := sorry
+
+theorem relax_leq (g : Graph n) (source i : Fin n) (h : ((relax g (initPaths g source) counter) i).isSome) :
+  weight (((relax g (initPaths g source) counter) i).get h) ≥ weight (((relax g (initPaths g source) (counter+1)) i).get (relax_isSome g i h))
+  := sorry 
+
+theorem relax_leq_edge (g : Graph n) (e: Edge n) (hyp : e ∈ g.edges) 
+  (h1 : ((relax g (initPaths g source) counter) e.source).isSome) (h2 : ((relax g (initPaths g source) counter) e.target).isSome) : 
+  weight (((relax g (initPaths g source) counter) e.source).get h1) + e.weight ≥ weight (((relax g (initPaths g source) counter) e.target).get h2) 
+  := sorry 
+
+theorem weight_source_isSome (g : Graph n) (source : Fin n) (counter: Nat): 
+  ((relax g (initPaths g source) counter) source).isSome:= by 
+  induction counter
+  case zero => 
+    simp[relax]
+    simp[initPaths]
+  case succ counter ih =>
+    apply (relax_isSome g source source ih) 
+     
+
+theorem weight_source_is_zero (g : Graph n) (source : Fin n) (counter: Nat) : 
+   weight ( ((relax g (initPaths g source) counter) source).get (weight_source_isSome g source counter) ) = 0 := sorry
+  
+
+theorem BellmanFordAux (source : Fin n) (counter : Nat) (source : Fin n):
+  (i: Fin n) → 
+  (h: ((relax g (initPaths g source) (counter)) i).isSome) →  
+  (p : (EdgePath g source i)) →  
+  (h1 : (length p ≤ counter))  →  
+  (weight p ≥ weight (((relax g (initPaths g source) (counter)) i).get h)) := by
   --let BF_paths_curr := (relax g (initPaths source) (counter))
   induction counter
   case zero =>
-    intro h p h1
+    intro i h p h1
     simp[relax]
     simp[length_geq_zero] at h1
     simp[h1,len_zero_imp_weight_zero]
     have h2 : i = source := (init_path_some_source g source i) h
+    --have h3 : ((initPaths g source i).get h) = ((initPaths g source source).get (by simp[initPaths])) 
+    simp[initPaths]
+    simp[h2]
     sorry
+  case succ counter ih =>
+    intro i h p h1
+    induction p
+    case point source => 
+      rw[weight]
+      simp[weight_source_is_zero]
+    case cons e source hyp p' ih1 =>
+        have h2 : length p' ≤ counter := by
+          rw[length] at h1
+          sorry
+        let path_exists_hyp := (path_exists_then_isSome g source e.source counter p')
+        let path_exists_hyp_next := (relax_isSome g source e.source path_exists_hyp)
+        have h3 : 
+          weight p' ≥ weight (((relax g (initPaths g source) (counter)) e.source).get path_exists_hyp) := 
+          by apply (ih e.source path_exists_hyp p') h2
+        have h4 : 
+          weight (((relax g (initPaths g source) (counter)) e.source).get path_exists_hyp) + e.weight ≥ 
+          weight (((relax g (initPaths g source) (counter+1)) e.target).get h) :=
+          by
+            calc
+            weight (((relax g (initPaths g source) (counter)) e.source).get path_exists_hyp) + e.weight 
+              ≥ weight (((relax g (initPaths g source) (counter + 1)) e.source).get path_exists_hyp_next) + e.weight 
+              := (by simp[relax_leq])
+            _ ≥ weight (((relax g (initPaths g source) (counter+1)) e.target).get h) 
+              := (relax_leq_edge g e hyp path_exists_hyp_next h)
+        have h5: weight p' + e.weight ≥ weight (((relax g (initPaths g source) (counter+1)) e.target).get h) :=
+          by
+            calc
+            weight p' + e.weight ≥ weight (((relax g (initPaths g source) (counter)) e.source).get path_exists_hyp) + e.weight
+              := (by simp[h3])
+            _ ≥ weight (((relax g (initPaths g source) (counter+1)) e.target).get h) := (by simp[h4])
+        have h6 : weight (EdgePath.cons e source hyp p') = weight p' + e.weight  := by
+          simp[weight]
+          apply Int.add_comm e.weight (weight p')
+        rw[h6]
+        simp[h5]
+
+
+            
+
+
 
     
+
   
