@@ -16,10 +16,14 @@ structure Graph (n : Nat) where
 
 instance : ToString (Graph n) where toString graph := toString graph.edges
 
+
+/-- EdgePath definition, done inductively. When adding an edge to the path, requires a hypothesis that that edge is
+an edge of graph g.-/
 inductive EdgePath (g : Graph n) : Fin n → Fin n → Type   where
 | point (v : Fin n) : EdgePath g v v
 | cons  (e : Edge n) (w : Fin n) (hyp : e ∈ g.edges) (p : EdgePath g w e.source) : EdgePath g w e.target
 
+/-- Auxilliary function for representing EdgePath. Returns a list of edges in an EdgePath-/
 def get_path_edges (n : Nat) (g : Graph n) (a : Fin n) (b : Fin n) (path : EdgePath g a b) : List (Edge n) :=
   match path with
   | EdgePath.point c => [{source := c, target := c, weight := 0}]
@@ -27,16 +31,19 @@ def get_path_edges (n : Nat) (g : Graph n) (a : Fin n) (b : Fin n) (path : EdgeP
 
 instance : ToString (EdgePath g a b) where toString path := toString (get_path_edges _ g a b path)
 
+/-- Weight of path. This is the sum of edge weights of the path.-/
 def weight (p : EdgePath g a b) : Int := 
   match p with
   |EdgePath.point _  => 0
   |EdgePath.cons e _ _ p' => e.weight + weight p'
 
+/-- Length of path. Number of edges in the path-/
 def length (p : EdgePath g a b) : Nat := 
   match p with
   |EdgePath.point _  => 0
   |EdgePath.cons _ _ _ p' => 1 + length p'
 
+/--For any path, length of p = 0 implies weight of p = 0-/
 theorem len_zero_imp_weight_zero (p : EdgePath g a b) : length p = 0 → weight p = 0 := by
   intro hyp
   match p with
@@ -47,9 +54,14 @@ theorem length_geq_zero (p : EdgePath g a b) : length p ≥ 0 := by
   induction p
   case point => simp[]
   case cons e _ _ p' _ => simp[]
- 
- axiom non_negative_cycle (n : Nat) (g : Graph n) (i : Fin n) : ∀ p : EdgePath g i i, weight p ≥ 0 
 
+/-- Assuming no negative cycles-/
+axiom non_negative_cycle (n : Nat) (g : Graph n) (i : Fin n) : ∀ p : EdgePath g i i, weight p ≥ 0 
+
+
+/-- Initialized version of the "List of paths" which BellmanFord is going to return. The type is a function from
+Fin n to Option (EdgePath g source index). Sets the function to none whenever index ≠ source, and an empty
+path at the source when index = source.-/
 def initPaths (g : Graph n) (source : Fin n) : (index: Fin n) → Option (EdgePath g source index) :=
   let temp : (index: Fin n) → Option (EdgePath g source index) := fun index ↦ if h:index = source then (some (by rw[h]; exact EdgePath.point source)) else none
   temp
@@ -59,6 +71,9 @@ theorem weight_initPaths (g : Graph n) (source : Fin n) : weight ((initPaths g s
 
 /- BF starts-/
 
+/-- relax_edge relaxes an edge. In the "List of Paths", whenever there is some path at edge.source, it checks if
+the (weight of path at edge.source) + (edge.weight) < (weight of path at edge.target). If so, it updates the "List of Paths"
+by replacing the path at edge.target with a new EdgePath, which is just the path at edge.source followed by edge.-/
 def relax_edge (paths : (index : Fin n) → Option (EdgePath g source index)) (edge : Edge n) (hyp : edge ∈ g.edges): (index : Fin n) → Option (EdgePath g source index):=
   match (paths edge.source) with
   | none => paths
@@ -69,6 +84,9 @@ def relax_edge (paths : (index : Fin n) → Option (EdgePath g source index)) (e
                             fun index ↦ if h:index = edge.target then (some (by rw[h]; exact EdgePath.cons edge source hyp u)) else (paths index)
                           else paths
 
+/-- This is the auxiliiary recursive function which recurses over all edges of g.edges in relax. It propogates the hypothesis
+that the current remaining list of edges is a subset of g.edges in order to continue providing the hypothesis that edge
+∈ g.edges which relax_edge requires.-/
 def recurse_over_all_edges (remaining : List (Edge n)) (hyp : remaining ⊆ g.edges) (paths :(index : Fin n) → Option (EdgePath g source index)) : (index : Fin n) → Option (EdgePath g source index) :=
   match h: remaining with
   | [] => paths
@@ -78,6 +96,8 @@ def recurse_over_all_edges (remaining : List (Edge n)) (hyp : remaining ⊆ g.ed
                   let pathsnext : (index : Fin n) → Option (EdgePath g source index) := relax_edge paths head (by rw[List.cons_subset] at hyp; exact hyp.1)
                   recurse_over_all_edges tail tail_is_sub pathsnext
 
+/-- Each execution of relax calls relax_edge on the "List of Paths" and each edge in g.edges. Since EdgePath requires
+a hypothesis that the edge is in g.edges, we write an extra recursive function rather than using List.foldl.-/
 def relax (g : Graph n) (BFn : (index : Fin n) → Option (EdgePath g source index)) (counter : Nat) : (index : Fin n) → Option (EdgePath g source index):= 
   match counter with
   | 0 => BFn
@@ -86,7 +106,7 @@ def relax (g : Graph n) (BFn : (index : Fin n) → Option (EdgePath g source ind
               recurse_over_all_edges g.edges hyp BFn
              relax g BFnplus1 m
 
-
+/-- BellmanFord just calls relax with counter = n-1-/
 def BellmanFord (g : Graph n) (source : Fin n) : (index : Fin n) → Option (EdgePath g source index) :=
   relax g (initPaths g source) (n - 1)
 
@@ -108,7 +128,7 @@ def path1 : EdgePath graph1 0 3 :=
 
 /- Proof -/
  
-
+/-- In initPaths, if path at index i isSome, then i = source-/
 theorem init_path_some_source (g : Graph n) (source : Fin n) (i : Fin n) : ((initPaths g source) i).isSome → i = source := by
   have lm : ¬ i = source → ¬ (initPaths g source i).isSome := by
     intro hyp
@@ -116,7 +136,8 @@ theorem init_path_some_source (g : Graph n) (source : Fin n) (i : Fin n) : ((ini
   rw[not_imp_not] at lm
   assumption
 
-
+/-- Monotonicity Thm 1. In a "List of Paths", given an edge, if path at edge.source isSome, then after execution of 
+relax_edge on this "List of Paths" at this edge, the path at edge.target isSome (i.e. relax_edge doesn't add nones)-/
 theorem relax_edge_some (edge : Edge n) (hyp : edge ∈ g.edges) (paths : (index : Fin n) → Option (EdgePath g source index))
   (h1 : (paths edge.source).isSome)
   : ((relax_edge paths edge hyp) edge.target).isSome:= by
@@ -132,7 +153,8 @@ theorem relax_edge_some (edge : Edge n) (hyp : edge ∈ g.edges) (paths : (index
                               · simp[]
                               · simp[j]
 
-
+/-- Monotonicity Thm 2. If path at edge.source isSome and path at edge.target isSome, then the new path at edge.target
+(after execution of relax_edge) has weight ≤ weight of original path at edge.target-/
 theorem relax_edge_leq (edge : Edge n) (hyp : edge ∈ g.edges) (paths : (index : Fin n) → Option (EdgePath g source index))
   (h1 : (paths edge.source).isSome) (h2 : (paths edge.target).isSome)
   : (weight (((relax_edge paths edge hyp) edge.target).get (by exact relax_edge_some edge hyp paths h1)) ≤ (weight ((paths edge.target).get h2)) ) := by 
@@ -175,22 +197,30 @@ theorem relax_edge_leq (edge : Edge n) (hyp : edge ∈ g.edges) (paths : (index 
                     have lm2 : ((relax_edge paths edge hyp) edge.target).get (by exact relax_edge_some edge hyp paths h1) = ((paths edge.target).get h2) := by simp[lm]
                     simp[lm2]
 
-
+/-If there exists a path of length ≤ counter then after counter many relaxations then it will assigned some distance which is not none-/
 theorem path_exists_then_isSome (g : Graph n) (source i : Fin n) (counter : Nat): (p : EdgePath g source i) → (h : length p ≤ counter) → 
   ((relax g (initPaths g source) counter) i).isSome := sorry
 
+/-- If there is a path at ith index in "List of Paths", then there will be one after one execution of relax-/
 theorem relax_isSome (g : Graph n) (source i : Fin n) (h : ((relax g (initPaths g source) counter) i).isSome) :
   ((relax g (initPaths g source) (counter+1)) i).isSome := sorry
 
+/-- If there is a path at ith index in "List of Paths", then weight of path after one execution of relax ≤ 
+weight of original path-/
 theorem relax_leq (g : Graph n) (source i : Fin n) (h : ((relax g (initPaths g source) counter) i).isSome) :
   weight (((relax g (initPaths g source) counter) i).get h) ≥ weight (((relax g (initPaths g source) (counter+1)) i).get (relax_isSome g source i h))
   := sorry 
 
+
+/-It states that for given edge e in the graph say both e.source and e.target are assigned distance by BellmanFord algorithm after counter many
+relaxations then it states that distance assigned by BellmanFord to e.source + e.weight ≥ distance assigned to BellmanFord to e.target -/
 theorem relax_leq_edge (g : Graph n) (e: Edge n) (hyp : e ∈ g.edges) 
   (h1 : ((relax g (initPaths g source) counter) e.source).isSome) (h2 : ((relax g (initPaths g source) counter) e.target).isSome) : 
   weight (((relax g (initPaths g source) counter) e.source).get h1) + e.weight ≥ weight (((relax g (initPaths g source) counter) e.target).get h2) 
   := sorry 
 
+
+/-The following theorems below state that distance assigned to source is 0 for any (counter : Nat)-/
 theorem weight_source_isSome (g : Graph n) (source : Fin n) (counter: Nat): 
   ((relax g (initPaths g source) counter) source).isSome:= by 
   induction counter
@@ -211,6 +241,7 @@ theorem weight_source_is_zero (g : Graph n) (source : Fin n) (counter: Nat) :
    case succ counter ih =>
     sorry
   
+#check Nat.succ_le_succ_iff
 
 theorem BellmanFordAux (source : Fin n) (counter : Nat):
   (i: Fin n) → 
@@ -239,7 +270,10 @@ theorem BellmanFordAux (source : Fin n) (counter : Nat):
     case cons e source hyp p' ih1 =>
         have h2 : length p' ≤ counter := by
           rw[length] at h1
-          sorry
+          apply Nat.succ_le_succ_iff.mp
+          rw[Nat.succ_eq_add_one]
+          have obvious : length p' + 1 = 1 + length p' := by simp[Nat.add_comm]
+          simp[h1, obvious]
         let path_exists_hyp := (path_exists_then_isSome g source e.source counter p') h2
         let path_exists_hyp_next := (relax_isSome g source e.source path_exists_hyp)
         have h3 : 
@@ -267,36 +301,34 @@ theorem BellmanFordAux (source : Fin n) (counter : Nat):
         rw[h6]
         simp[h5]
 
-theorem Reduced_Path_theorem (source : Fin n) : (i : Fin n) → (p : EdgePath g source i) → (∃ p' : EdgePath g source i, (length p' ≤ n -1) ∧ (weight p ≥ weight p')) 
+/-Part 3-/
+
+/-- For any index i and path p from source to i, there exists a path with atmost n-1 edges whose weight ≤ weight p-/
+theorem Reduced_Path_theorem (g : Graph n) (source : Fin n) : (i : Fin n) → (p : EdgePath g source i) → 
+  (∃ p' : EdgePath g souce i, (length p' ≤ n -1) ∧ (weight p ≥ weight p')) 
   := by sorry
 
-theorem path_exists_then_isSome_BellmanFord (g : Graph n) : (i : Fin n) →  (p : EdgePath g source i) →  
+/-It states that if there exists a path p from source to i then BellamnFord will assign a distance to i-/
+theorem path_exists_then_isSome_BellmanFord (g : Graph n) (source : Fin n) : (i : Fin n) →  (p : EdgePath g source i) →  
   ((BellmanFord g source) i).isSome := by
   intro i p
-  match (Reduced_Path_theorem source i p) with
-  | ⟨ p', hp'⟩ => apply (path_exists_then_isSome g source i (n-1) p' hp'.left)
+  let ther : (∃ p' : EdgePath g source i, (length p' ≤ n -1) ∧ (weight p ≥ weight p')) := Reduced_Path_theorem g source i p 
+  match ther with
+  | ⟨ p' , hp' ⟩ => exact (path_exists_then_isSome g source i (n-1) p' hp'.left) 
 
-
+/-Correctness Of BellmanFord-/
 theorem BellamnFordPf (g: Graph n) (source : Fin n) : 
   (i : Fin n) → 
   (p : EdgePath g source i) →  
-  (weight p ≥ weight (((BellmanFord g source) i).get (path_exists_then_isSome_BellmanFord g i p))) := 
+  (weight p ≥ weight (((BellmanFord g source) i).get (path_exists_then_isSome_BellmanFord g source i p))) := 
   by 
     intro i p
-    match (Reduced_Path_theorem source i p) with
+    let ther : (∃ p' : EdgePath g source i, (length p' ≤ n -1) ∧ (weight p ≥ weight p')) := Reduced_Path_theorem g source i p
+    match ther with
     | ⟨ p', hp'⟩ => 
-      have h : weight p' ≥ weight (((BellmanFord g source) i).get (path_exists_then_isSome_BellmanFord g i p)) :=
+      have h : weight p' ≥ weight (((BellmanFord g source) i).get (path_exists_then_isSome_BellmanFord g source i p)) :=
         by
-          apply BellmanFordAux source (n-1) i (path_exists_then_isSome_BellmanFord g i p) p' hp'.left
+          apply BellmanFordAux source (n-1) i (path_exists_then_isSome_BellmanFord g source i p) p' hp'.left
       calc
       weight p ≥ weight p' := (hp'.right)
-      _ ≥ weight (((BellmanFord g source) i).get (path_exists_then_isSome_BellmanFord g i p)) := h        
-
-
-            
-
-
-
-    
-
-  
+      _ ≥ weight (((BellmanFord g source) i).get (path_exists_then_isSome_BellmanFord g source i p)) := (h)        
