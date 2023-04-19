@@ -84,17 +84,17 @@ def relax_edge (paths : (index : Fin n) → Option (EdgePath g source index)) (e
                             fun index ↦ if h:index = edge.target then (some (by rw[h]; exact EdgePath.cons edge source hyp u)) else (paths index)
                           else paths
 
-/-- This is the auxiliiary recursive function which recurses over all edges of g.edges in relax. It propogates the hypothesis
-that the current remaining list of edges is a subset of g.edges in order to continue providing the hypothesis that edge
-∈ g.edges which relax_edge requires.-/
-def recurse_over_all_edges (remaining : List (Edge n)) (hyp : remaining ⊆ g.edges) (paths :(index : Fin n) → Option (EdgePath g source index)) : (index : Fin n) → Option (EdgePath g source index) :=
-  match h: remaining with
-  | [] => paths
-  | head::tail => have tail_is_sub : tail ⊆ g.edges := by 
-                    exact List.subset_of_cons_subset (hyp)
+-- /-- This is the auxiliiary recursive function which recurses over all edges of g.edges in relax. It propogates the hypothesis
+-- that the current remaining list of edges is a subset of g.edges in order to continue providing the hypothesis that edge
+-- ∈ g.edges which relax_edge requires.-/
+-- def recurse_over_all_edges (remaining : List (Edge n)) (hyp : remaining ⊆ g.edges) (paths :(index : Fin n) → Option (EdgePath g source index)) : (index : Fin n) → Option (EdgePath g source index) :=
+--   match h: remaining with
+--   | [] => paths
+--   | head::tail => have tail_is_sub : tail ⊆ g.edges := by 
+--                     exact List.subset_of_cons_subset (hyp)
                   
-                  let pathsnext : (index : Fin n) → Option (EdgePath g source index) := relax_edge paths head (by rw[List.cons_subset] at hyp; exact hyp.1)
-                  recurse_over_all_edges tail tail_is_sub pathsnext
+--                   let pathsnext : (index : Fin n) → Option (EdgePath g source index) := relax_edge paths head (by rw[List.cons_subset] at hyp; exact hyp.1)
+--                   recurse_over_all_edges tail tail_is_sub pathsnext
 
 /-- Each execution of relax calls relax_edge on the "List of Paths" and each edge in g.edges. Since EdgePath requires
 a hypothesis that the edge is in g.edges, we write an extra recursive function rather than using List.foldl.-/
@@ -103,7 +103,14 @@ def relax (g : Graph n) (BFn : (index : Fin n) → Option (EdgePath g source ind
   | 0 => BFn
   | m + 1 => let BFnplus1 : (index : Fin n) → Option (EdgePath g source index) := 
               have hyp : g.edges ⊆ g.edges := by simp[]
-              recurse_over_all_edges g.edges hyp BFn
+              let rec over_all_edges : (remaining : List (Edge n)) -> (hyp : remaining ⊆ g.edges) -> (paths :(index : Fin n) → Option (EdgePath g source index)) -> (index : Fin n) → Option (EdgePath g source index)
+                | [], _, paths => paths
+                | head::tail, hyp, paths => have tail_is_sub : tail ⊆ g.edges := by 
+                                              exact List.subset_of_cons_subset (hyp)
+                                            
+                                            let pathsnext : (index : Fin n) → Option (EdgePath g source index) := relax_edge paths head (by rw[List.cons_subset] at hyp; exact hyp.1)
+                                            over_all_edges tail tail_is_sub pathsnext
+              over_all_edges g.edges hyp BFn
              relax g BFnplus1 m
 
 /-- BellmanFord just calls relax with counter = n-1-/
@@ -124,7 +131,7 @@ def path1 : EdgePath graph1 0 3 :=
 
 #eval path1
 
-#eval (BellmanFord graph1 2 3)
+#eval (BellmanFord graph1 0 1)
 
 /- Proof -/
  
