@@ -19,7 +19,7 @@ instance : ToString (Graph n) where toString graph := toString graph.edges
 
 /-- EdgePath definition, done inductively. When adding an edge to the path, requires a hypothesis that that edge is
 an edge of graph g.-/
-inductive EdgePath (g : Graph n) : Fin n → Fin n → Type   where
+inductive EdgePath (g : Graph n) : Fin n → Fin n → Type where
 | point (v : Fin n) : EdgePath g v v
 | cons  (e : Edge n) (w : Fin n) (hyp : e ∈ g.edges) (p : EdgePath g w e.source) : EdgePath g w e.target
 
@@ -28,6 +28,38 @@ def get_path_edges (n : Nat) (g : Graph n) (a : Fin n) (b : Fin n) (path : EdgeP
   match path with
   | EdgePath.point c => [{source := c, target := c, weight := 0}]
   | EdgePath.cons edge _ _ p => [⟨ edge.source, edge.target, edge.weight⟩ ] ++ get_path_edges n g a edge.source p
+
+/-Vertex array and its theorems-/
+
+def get_path_ver (g : Graph n) (p : EdgePath g source sink) : List (Fin n) :=
+  match p with
+  | EdgePath.point source => [source]
+  | EdgePath.cons e source _ p' => (get_path_ver g p') ++ [e.target]
+
+theorem source_sink_in_ver (g : Graph n) (source sink : Fin n) (p : EdgePath g source sink) :
+  (source ∈ get_path_ver g p) ∧ (sink ∈ get_path_ver g p) := by
+    have hl : source ∈ get_path_ver g p := by
+      induction p
+      case point => simp[get_path_ver]
+      case cons e source hyp p' ih => simp[get_path_ver,ih]
+    have hr : sink ∈ get_path_ver g p := by 
+      induction p
+      case point => simp[get_path_ver]
+      case cons e source hyp p' ih => simp[get_path_ver,ih]
+    exact ⟨ hl, hr ⟩ 
+
+theorem path_ver_cons (g : Graph n) (e : Edge n) (hyp : e ∈ g.edges) (source : Fin n)
+  (p : EdgePath g source e.source) :
+  (hi : i ∈ get_path_ver g (EdgePath.cons e source hyp p)) →  
+  (hex : ¬ (i ∈ get_path_ver g p)) →
+  (i = e.target)
+  := by
+  intro hi hex
+  simp[get_path_ver,hex] at hi
+  rw[hi]
+  
+
+
 
 instance : ToString (EdgePath g a b) where toString path := toString (get_path_edges _ g a b path)
 
@@ -43,7 +75,89 @@ def length (p : EdgePath g a b) : Nat :=
   |EdgePath.point _  => 0
   |EdgePath.cons _ _ _ p' => 1 + length p'
 
-/--For any path, length of p = 0 implies weight of p = 0-/
+/-Concatenation of paths-/
+
+def conc (p : EdgePath g source i) (p' : EdgePath g i sink) : EdgePath g source sink :=
+  match p' with
+  | EdgePath.point i => p
+  | EdgePath.cons e i hyp p1 => EdgePath.cons e source hyp (conc p p1) 
+
+theorem con_w (p : EdgePath g source i) (p' : EdgePath g i sink) :
+  weight (conc p p') = (weight p) + (weight p') := by  
+      induction p'  
+      case point => 
+        rw[weight]
+        simp[conc]
+      case cons e i hyp p1 ih =>
+        simp[conc,weight,ih]
+        rw[Int.add_comm,Int.add_right_comm]
+        simp[Int.add_assoc]
+
+theorem conc_cons (g: Graph n) (e : Edge n) (source i : Fin n) (hyp : e ∈ g.edges) 
+  (p1 : EdgePath g source i) (p2 : EdgePath g i e.source)  
+ : conc p1 (EdgePath.cons e i hyp p2) = EdgePath.cons e source hyp (conc p1 p2) := by
+     simp[conc]
+
+theorem conc_point (g : Graph n) (i : Fin n) (p : EdgePath g i i): 
+  (h : p = EdgePath.point i) → (p = conc p p) :=
+  by
+    intro h 
+    simp[h]
+    rw[conc]
+
+theorem conc_point_exists (g : Graph n) (i : Fin n) (p : EdgePath g i i): 
+  (h : p = EdgePath.point i) → 
+  ((∃ (p1 : EdgePath g i i) (p2 : EdgePath g i i), p = (conc p1 p2))) :=
+  by
+    intro h 
+    exact ⟨ p, p, conc_point g i p h ⟩   
+
+theorem conc_sub_paths_exists (g : Graph n) (p : EdgePath g source sink) :
+  (j : Fin (List.length (get_path_ver g p))) →    
+  (∃ (p1 : EdgePath g source (get_path_ver g p)[j]) 
+     (p2 : EdgePath g (get_path_ver g p)[j] sink), 
+      p = (conc p1 p2)) := by
+    intro j
+    --let i := (get_path_ver g p)[j]
+    induction p
+    case point v => 
+      let p1 : EdgePath g v v := EdgePath.point v
+      let p2 : EdgePath g v v := EdgePath.point v
+      exact ⟨ p1, p2, by simp[conc]⟩ 
+    case cons e source hyp p' ih =>
+      let ⟨jval, h'⟩ := j
+      let j' : Fin (List.length (get_path_ver g p')-1) := ⟨jval - 1, (by simp[h']) ⟩
+      by_cases h : j < List.length (get_path_ver g p') 
+      case pos => 
+        match (ih j) with
+        | ⟨ p1',p2',hp'⟩ => 
+          let p2 : EdgePath g (get_path_ver g p')[j] e.target := 
+            (EdgePath.cons e (get_path_ver g p')[j] hyp p2')
+          have hf : EdgePath.cons e source hyp (conc p1' p2') = conc p1' p2 := by
+            rw[conc_cons]
+          exact ⟨ p1', p2, by simp[hf,hp'] ⟩
+      case neg =>      
+        have hf : j = List.length (get_path_ver g (EdgePath.cons e source hyp p')) - 1 := by 
+          have h1 : j ≥ List.length (get_path_ver g (EdgePath.cons e source hyp p')) - 1 := sorry
+          have h2 : j ≤ List.length (get_path_ver g (EdgePath.cons e source hyp p')) - 1 := sorry
+          simp[h1,h2]
+          sorry
+
+theorem con_sub_cycle_paths_exists (g : Graph n) (p : EdgePath g source sink) 
+  (i j: Fin (List.length (get_path_ver g p))):
+  (i < j) → ((get_path_ver g p)[i] = (get_path_ver g p)[j]) → 
+  (∃ (p1 : EdgePath g source (get_path_ver g p)[i])
+     (c : EdgePath g (get_path_ver g p)[i] (get_path_ver g p)[j])
+     (p2 : EdgePath g (get_path_ver g p)[j] sink),
+     p = conc p1 (conc c p2)
+  ) := by
+    intro hle hout
+    let fir_split := (conc_sub_paths_exists g p i)
+    match fir_split with
+    | ⟨ p1, p2, hp ⟩ => 
+      sorry
+
+/--For any path, length of p = 0 implies weight of p = 0--/
 theorem len_zero_imp_weight_zero (p : EdgePath g a b) : length p = 0 → weight p = 0 := by
   intro hyp
   match p with
@@ -68,6 +182,17 @@ def initPaths (g : Graph n) (source : Fin n) : (index: Fin n) → Option (EdgePa
 
 theorem weight_initPaths (g : Graph n) (source : Fin n) : weight ((initPaths g source source).get (by simp[initPaths])) = 0 := 
   by simp[initPaths,weight]
+
+theorem path_length_cons (g : Graph n) (e : Edge n) (hyp : e ∈ g.edges) (source: Fin n) (p : EdgePath g source e.source) (len : Nat): 
+  (h : length (EdgePath.cons e source hyp p) ≤ len + 1) → 
+  (length p ≤ len) := by
+    intro h
+    rw[length] at h
+    simp[Nat.add_comm,Nat.succ_le_succ_iff.mp] at h
+    simp[h]
+    
+    
+
 
 /- BF starts-/
 
@@ -339,7 +464,7 @@ theorem BellmanFordAux (source : Fin n) (counter : Nat):
     have h2 : i = source := (init_path_some_source g source i) h
     --have h3 : ((initPaths g source i).get h) = ((initPaths g source source).get (by simp[initPaths])) 
     simp[initPaths]
-    simp[h2]
+    simp[<-h2]
     sorry
   case succ counter ih =>
     intro i h p h1
@@ -349,11 +474,7 @@ theorem BellmanFordAux (source : Fin n) (counter : Nat):
       simp[weight_source_is_zero]
     case cons e source hyp p' ih1 =>
         have h2 : length p' ≤ counter := by
-          rw[length] at h1
-          apply Nat.succ_le_succ_iff.mp
-          rw[Nat.succ_eq_add_one]
-          have obvious : length p' + 1 = 1 + length p' := by simp[Nat.add_comm]
-          simp[h1, obvious]
+          apply path_length_cons g e hyp source p' counter h1
         let path_exists_hyp := (path_exists_then_isSome g source e.source counter p') h2
         let path_exists_hyp_next := (relax_isSome g source e.source path_exists_hyp)
         have h3 : 
@@ -382,6 +503,8 @@ theorem BellmanFordAux (source : Fin n) (counter : Nat):
         simp[h5]
 
 /-Part 3-/
+
+/-Defining Sub Paths of a Path-/
 
 /-- For any index i and path p from source to i, there exists a path with atmost n-1 edges whose weight ≤ weight p-/
 theorem Reduced_Path_theorem (g : Graph n) (source : Fin n) : (i : Fin n) → (p : EdgePath g source i) → 
