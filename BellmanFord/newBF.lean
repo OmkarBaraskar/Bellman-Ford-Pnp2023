@@ -316,7 +316,7 @@ def relax (g : Graph n) (BFn : (index : Fin n) → Option (EdgePath g source ind
   | 0 => BFn
   | m + 1 => let BFnplus1 : (index : Fin n) → Option (EdgePath g source index) := 
               have hyp : g.edges ⊆ g.edges := by simp[]
-              let rec over_all_edges : (remaining : List (Edge n)) -> (hyp : remaining ⊆ g.edges) -> (paths :(index : Fin n) → Option (EdgePath g source index)) -> (index : Fin n) → Option (EdgePath g source index)
+              let rec over_all_edges : (remaining : List (Edge n)) -> (hyp : remaining ⊆ g.edges) -> (paths :(index : Fin n) → Option (EdgePath g source index)) -> ((index : Fin n) → Option (EdgePath g source index))
                 | [], _, paths => paths
                 | head::tail, hyp, paths => have tail_is_sub : tail ⊆ g.edges := by 
                                               exact List.subset_of_cons_subset (hyp)
@@ -439,11 +439,66 @@ theorem path_exists_then_isSome (g : Graph n) (source i : Fin n) (counter : Nat)
 
 
 
+theorem relax_ind (g : Graph n) (paths : (index : Fin n) → Option (EdgePath g source index)) (counter : Nat)
+  : relax g paths (counter+1) = relax g (relax g paths counter) 1 := by
+    simp[relax]
+    let rec prove : (counter : Nat) → (paths : (index : Fin n) → Option (EdgePath g source index)) → (relax g (relax.over_all_edges g g.edges (by simp[]) paths) counter = relax.over_all_edges g g.edges (by simp[]) (relax g paths counter))
+    | 0, paths1 => by simp[relax]
+    | m + 1, paths1 => by 
+                      simp[relax]
+                      exact (prove m (relax.over_all_edges g g.edges (by simp[]) paths1))
+    exact prove counter paths
+
+theorem over_edges_isSome (source i : Fin n) (edgelist : List (Edge n)) (hyp : edgelist ⊆ g.edges) (paths :(index : Fin n) → Option (EdgePath g source index)) (h : (paths i).isSome)
+  : (relax.over_all_edges g edgelist hyp paths i).isSome := by
+    match e : edgelist with
+    | [] => simp[relax.over_all_edges]
+            exact h
+    | head::tail => simp[relax.over_all_edges]
+                    have k : (relax_edge paths head (by rw[List.cons_subset] at hyp; exact hyp.1) i).isSome := by
+                      match c1 : paths head.source with
+                        | none => rw[relax_edge]
+                                  simp[c1]
+                                  exact h
+                        | some p => match c2 : paths head.target with
+                                    | none => if con: i = head.target then
+                                                rw[<- con] at c2
+                                                rw[c2] at h
+                                                contradiction
+                                              else 
+                                                rw[relax_edge]
+                                                simp[c1, c2, con]
+                                                exact h
+
+                                    | some q => if cond: i = head.target then 
+                                                  rw[relax_edge]
+                                                  simp[c1, c2, cond]
+                                                  split
+                                                  case inl => simp[]
+                                                  case inr => exact h
+
+                                                else 
+                                                  rw[relax_edge]
+                                                  simp[c1, c2, cond]
+                                                  split
+                                                  · exact h
+                                                  · exact h
+                    exact over_edges_isSome source i tail (by exact List.subset_of_cons_subset (hyp)) (relax_edge paths head (by rw[List.cons_subset] at hyp; exact hyp.1)) k
+
+
 
 
 /-- If there is a path at ith index in "List of Paths", then there will be one after one execution of relax-/
 theorem relax_isSome (g : Graph n) (source i : Fin n) (h : ((relax g (initPaths g source) counter) i).isSome) :
-  ((relax g (initPaths g source) (counter+1)) i).isSome := sorry
+  ((relax g (initPaths g source) (counter+1)) i).isSome := by
+    have h1 : relax g (initPaths g source) (counter + 1) = relax g (relax g (initPaths g source) counter) 1 := by apply relax_ind
+    rw[h1]
+    simp[relax]
+    let v : (index : Fin n) → Option (EdgePath g source index) := (relax g (initPaths g source) counter)
+    
+
+      
+
 
 /-- If there is a path at ith index in "List of Paths", then weight of path after one execution of relax ≤ 
 weight of original path-/
