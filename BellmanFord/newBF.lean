@@ -120,8 +120,13 @@ theorem conc_sub_paths_exists (g : Graph n) (p : EdgePath g source sink) :
     intro j
     --let i := (get_path_ver g p)[j]
     induction p
-    case point => sorry
+    case point v => 
+      let p1 : EdgePath g v v := EdgePath.point v
+      let p2 : EdgePath g v v := EdgePath.point v
+      exact ⟨ p1, p2, by simp[conc]⟩ 
     case cons e source hyp p' ih =>
+      let ⟨jval, h'⟩ := j
+      let j' : Fin (List.length (get_path_ver g p')-1) := ⟨jval - 1, (by simp[h']) ⟩
       by_cases h : j < List.length (get_path_ver g p') 
       case pos => 
         match (ih j) with
@@ -131,14 +136,26 @@ theorem conc_sub_paths_exists (g : Graph n) (p : EdgePath g source sink) :
           have hf : EdgePath.cons e source hyp (conc p1' p2') = conc p1' p2 := by
             rw[conc_cons]
           exact ⟨ p1', p2, by simp[hf,hp'] ⟩
-      case neg => sorry
+      case neg =>      
+        have hf : j = List.length (get_path_ver g (EdgePath.cons e source hyp p')) - 1 := by 
+          have h1 : j ≥ List.length (get_path_ver g (EdgePath.cons e source hyp p')) - 1 := sorry
+          have h2 : j ≤ List.length (get_path_ver g (EdgePath.cons e source hyp p')) - 1 := sorry
+          simp[h1,h2]
+          sorry
 
-
-
-
-      
-
-
+theorem con_sub_cycle_paths_exists (g : Graph n) (p : EdgePath g source sink) 
+  (i j: Fin (List.length (get_path_ver g p))):
+  (i < j) → ((get_path_ver g p)[i] = (get_path_ver g p)[j]) → 
+  (∃ (p1 : EdgePath g source (get_path_ver g p)[i])
+     (c : EdgePath g (get_path_ver g p)[i] (get_path_ver g p)[j])
+     (p2 : EdgePath g (get_path_ver g p)[j] sink),
+     p = conc p1 (conc c p2)
+  ) := by
+    intro hle hout
+    let fir_split := (conc_sub_paths_exists g p i)
+    match fir_split with
+    | ⟨ p1, p2, hp ⟩ => 
+      sorry
 
 /--For any path, length of p = 0 implies weight of p = 0--/
 theorem len_zero_imp_weight_zero (p : EdgePath g a b) : length p = 0 → weight p = 0 := by
