@@ -373,11 +373,13 @@ theorem over_edges_isSome (source i : Fin n) (edgelist : List (Edge n)) (hyp : e
                                   simp[c1]
                                   exact h
                         | some p => match c2 : paths head.target with
-                                    | none => if cond: i = head.target then
-                                                rw[<- cond] at c2
+                                    | none => if con: i = head.target then
+                                                rw[<- con] at c2
+                                                rw[c2] at h
+                                                contradiction
                                               else 
                                                 rw[relax_edge]
-                                                simp[c1, c2, cond]
+                                                simp[c1, c2, con]
                                                 exact h
 
                                     | some q => if cond: i = head.target then 
