@@ -466,17 +466,8 @@ theorem relax_edge_leq_given_index (source i : Fin n) (edge : Edge n) (hyp : edg
                               simp[lm]
 
                   | some q => if con: i = edge.target then
-                                if weightcon : weight p + edge.weight < weight q then
-                                  simp[]
-                                  have obvious : EdgePath g source edge.target = EdgePath g source i := by rw[con]
-                                  have lm : paths i = (by rw[<- obvious]; exact (paths edge.target)) := by 
-                                    rw[con]
-
-
-
-
-                                else
-                                  sorry
+                                by_cases condition : weight q > weight p + edge.weight
+                                case pos => 
 
                               else 
                                 have lm : relax_edge paths edge hyp i = paths i := by
@@ -533,37 +524,11 @@ theorem over_edges_leq (source i : Fin n) (edgelist : List (Edge n)) (hyp : edge
     match e : edgelist with
     | [] => simp[relax.over_all_edges]
     | head::tail => simp[relax.over_all_edges]
-                    have k : weight ((relax_edge paths head (by rw[List.cons_subset] at hyp; exact hyp.1) i).get (by 
-                      simp[])) ≤ 
+                    have k : weight ((relax_edge paths head (by rw[List.cons_subset] at hyp; exact hyp.1) i).get (by apply relax_edge_some_given_index; exact h)) ≤ 
                       weight ((paths i).get h):= by
-                      match c1 : paths head.source with
-                        | none => rw[relax_edge]
-                                  simp[c1]
-                                  exact h
-                        | some p => match c2 : paths head.target with
-                                    | none => if con: i = head.target then
-                                                rw[<- con] at c2
-                                                rw[c2] at h
-                                                contradiction
-                                              else 
-                                                rw[relax_edge]
-                                                simp[c1, c2, con]
-                                                exact h
-
-                                    | some q => if cond: i = head.target then 
-                                                  rw[relax_edge]
-                                                  simp[c1, c2, cond]
-                                                  split
-                                                  case inl => simp[]
-                                                  case inr => exact h
-
-                                                else 
-                                                  rw[relax_edge]
-                                                  simp[c1, c2, cond]
-                                                  split
-                                                  · exact h
-                                                  · exact h
-                    exact over_edges_leq source i tail (by exact List.subset_of_cons_subset (hyp)) (relax_edge paths head (by rw[List.cons_subset] at hyp; exact hyp.1)) k
+                      apply relax_edge_leq_given_index
+                    have l := over_edges_leq source i tail (by exact List.subset_of_cons_subset (hyp)) (relax_edge paths head (by rw[List.cons_subset] at hyp; exact hyp.1)) (by apply relax_edge_some_given_index; exact h)
+                    apply Int.le_trans l k
 
 
 
@@ -580,7 +545,12 @@ theorem relax_isSome (g : Graph n) (source i : Fin n) (h : ((relax g (initPaths 
 weight of original path-/
 theorem relax_leq (g : Graph n) (source i : Fin n) (h : ((relax g (initPaths g source) counter) i).isSome) :
   weight (((relax g (initPaths g source) counter) i).get h) ≥ weight (((relax g (initPaths g source) (counter+1)) i).get (relax_isSome g source i h))
-  := sorry
+  := by
+  have h1 : relax g (initPaths g source) (counter + 1) = relax g (relax g (initPaths g source) counter) 1 := by apply relax_ind
+  have h2 : ((relax g (initPaths g source) (counter+1)) i).get (relax_isSome g source i h) = ((relax g (relax g (initPaths g source) counter) 1 i).get (by apply over_edges_isSome; exact h)) := by simp[h1]
+  rw[h2]
+  simp[relax]
+  apply over_edges_leq
 
 
 /-It states that for given edge e in the graph say both e.source and e.target are assigned distance by BellmanFord algorithm after counter many
