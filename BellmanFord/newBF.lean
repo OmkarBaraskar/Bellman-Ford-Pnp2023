@@ -608,7 +608,6 @@ theorem relax_edge_leq_given_index (source i : Fin n) (edge : Edge n) (hyp : edg
                   | some q => if con: i = edge.target then
                                 by_cases condition : weight q > weight p + edge.weight
                                 case pos => 
-
                               else 
                                 have lm : relax_edge paths edge hyp i = paths i := by
                                   rw[relax_edge]
@@ -617,6 +616,7 @@ theorem relax_edge_leq_given_index (source i : Fin n) (edge : Edge n) (hyp : edg
                                   · simp[]
                                   · simp[]
                                 simp[lm]
+
 
 /-If there exists a path of length ≤ counter then after counter many relaxations then it will assigned some distance which is not none-/
 theorem path_exists_then_isSome (g : Graph n) (source i : Fin n) (counter : Nat): (p : EdgePath g source i) → (h : length p ≤ counter) →
@@ -730,9 +730,12 @@ theorem weight_source_is_zero (g : Graph n) (source : Fin n) (counter: Nat) :
         ≥ weight (((relax g (initPaths g source) (counter+1)) source).get hyp_next)
         := by simp[relax_leq]
     rw[ih] at h
-    simp[h]
-    sorry 
-#check Nat.succ_le_succ_iff
+    have h1 : weight (((relax g (initPaths g source) (counter+1)) source).get hyp_next) ≥ 0 := 
+      let p : EdgePath g source source := ((relax g (initPaths g source) (counter+1)) source).get hyp_next 
+      non_negative_cycle n g source p
+    apply Int.le_antisymm h h1
+    
+#check Nat.le_antisymm
 
 theorem BellmanFordAux (source : Fin n) (counter : Nat):
   (i: Fin n) → 
